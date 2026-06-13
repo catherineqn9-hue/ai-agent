@@ -1,0 +1,466 @@
+{
+  "menus": [
+    {
+      "id": "assistant",
+      "title": "AI 助手问答",
+      "icon": "AI",
+      "type": "assistant",
+      "resource": null,
+      "hint": "通过对话调用后端接口能力",
+      "groupName": "智能助手",
+      "tableFields": [],
+      "fields": []
+    },
+    {
+      "id": "agent",
+      "title": "Agent 配置",
+      "icon": "A",
+      "type": "crud",
+      "resource": "agent-configs",
+      "hint": "维护 Agent 开关、类型、Provider、提示词和可调用工具。",
+      "groupName": "基础配置",
+      "tableFields": [
+        "agent_key",
+        "agent_name",
+        "agent_type",
+        "provider",
+        "enabled"
+      ],
+      "fields": [
+        {
+          "name": "agent_key",
+          "label": "Agent Key",
+          "required": true
+        },
+        {
+          "name": "agent_name",
+          "label": "Agent 名称",
+          "required": true
+        },
+        {
+          "name": "agent_type",
+          "label": "Agent 类型",
+          "required": true
+        },
+        {
+          "name": "provider",
+          "label": "Provider",
+          "default": "langgraph"
+        },
+        {
+          "name": "model_name",
+          "label": "模型"
+        },
+        {
+          "name": "system_prompt",
+          "label": "系统提示词",
+          "type": "textarea"
+        },
+        {
+          "name": "tool_permissions",
+          "label": "工具权限 JSON",
+          "type": "json",
+          "default": "[]"
+        },
+        {
+          "name": "parameters",
+          "label": "参数 JSON",
+          "type": "json",
+          "default": "{}"
+        },
+        {
+          "name": "enabled",
+          "label": "启用",
+          "type": "boolean",
+          "default": true
+        }
+      ]
+    },
+    {
+      "id": "supervision",
+      "title": "督办事项",
+      "icon": "D",
+      "type": "supervision",
+      "resource": "supervision-items",
+      "hint": "维护督办事项主数据，后续 Excel 导入和 AI 调用都会落到这里。",
+      "groupName": "督办业务",
+      "tableFields": [],
+      "fields": []
+    },
+    {
+      "id": "integration",
+      "title": "接口配置",
+      "icon": "I",
+      "type": "crud",
+      "resource": "integration-configs",
+      "hint": "维护用户服务、IM 服务、OA 服务等外部接口配置。",
+      "groupName": "基础配置",
+      "tableFields": [
+        "integration_key",
+        "integration_name",
+        "integration_type",
+        "base_url",
+        "enabled"
+      ],
+      "fields": [
+        {
+          "name": "integration_key",
+          "label": "接口 Key",
+          "required": true
+        },
+        {
+          "name": "integration_name",
+          "label": "接口名称",
+          "required": true
+        },
+        {
+          "name": "integration_type",
+          "label": "接口类型",
+          "required": true
+        },
+        {
+          "name": "base_url",
+          "label": "接口地址"
+        },
+        {
+          "name": "auth_type",
+          "label": "鉴权方式",
+          "default": "none"
+        },
+        {
+          "name": "auth_config",
+          "label": "鉴权配置 JSON",
+          "type": "json",
+          "default": "{}"
+        },
+        {
+          "name": "timeout_seconds",
+          "label": "超时秒数",
+          "type": "number",
+          "default": 10
+        },
+        {
+          "name": "enabled",
+          "label": "启用",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    {
+      "id": "template",
+      "title": "消息模板",
+      "icon": "M",
+      "type": "crud",
+      "resource": "message-templates",
+      "hint": "维护确认接收、临期催办、逾期催办、进度反馈等消息模板。",
+      "groupName": "基础配置",
+      "tableFields": [
+        "template_key",
+        "template_name",
+        "scene",
+        "channel",
+        "enabled"
+      ],
+      "fields": [
+        {
+          "name": "template_key",
+          "label": "模板 Key",
+          "required": true
+        },
+        {
+          "name": "template_name",
+          "label": "模板名称",
+          "required": true
+        },
+        {
+          "name": "scene",
+          "label": "场景",
+          "required": true
+        },
+        {
+          "name": "channel",
+          "label": "渠道",
+          "default": "im"
+        },
+        {
+          "name": "title_template",
+          "label": "标题模板",
+          "type": "textarea"
+        },
+        {
+          "name": "body_template",
+          "label": "正文模板",
+          "type": "textarea"
+        },
+        {
+          "name": "variables",
+          "label": "变量 JSON",
+          "type": "json",
+          "default": "[]"
+        },
+        {
+          "name": "enabled",
+          "label": "启用",
+          "type": "boolean",
+          "default": true
+        }
+      ]
+    },
+    {
+      "id": "excel_template",
+      "title": "Excel 导入模板",
+      "icon": "T",
+      "type": "crud",
+      "resource": "excel-import-templates",
+      "hint": "维护导入模板编码、策略编码和列映射配置。",
+      "groupName": "基础配置",
+      "tableFields": [
+        "template_code",
+        "template_name",
+        "handler_code",
+        "source_columns",
+        "entity_fields",
+        "enabled"
+      ],
+      "fields": [
+        {
+          "name": "template_code",
+          "label": "模板 Code",
+          "required": true
+        },
+        {
+          "name": "template_name",
+          "label": "模板名称",
+          "required": true
+        },
+        {
+          "name": "description",
+          "label": "说明",
+          "type": "textarea"
+        },
+        {
+          "name": "handler_code",
+          "label": "策略 Code",
+          "default": "standard_supervision"
+        },
+        {
+          "name": "source_columns",
+          "label": "Excel 中文列 JSON",
+          "type": "json",
+          "default": "[\"事项编号\",\"事项标题\",\"描述\",\"优先级\",\"状态\",\"截止时间\",\"创建人\"]"
+        },
+        {
+          "name": "entity_fields",
+          "label": "实体英文字段 JSON",
+          "type": "json",
+          "default": "[\"item_no\",\"title\",\"description\",\"priority\",\"status\",\"deadline_at\",\"created_by\"]"
+        },
+        {
+          "name": "mapping_config",
+          "label": "扩展规则 JSON",
+          "type": "json",
+          "default": "{\"required_fields\":[\"title\"],\"aliases\":{}}"
+        },
+        {
+          "name": "enabled",
+          "label": "启用",
+          "type": "boolean",
+          "default": true
+        }
+      ]
+    },
+    {
+      "id": "reminder",
+      "title": "催办规则",
+      "icon": "R",
+      "type": "crud",
+      "resource": "reminder-rules",
+      "hint": "维护临期、逾期、重复提醒和跳过节假日策略。",
+      "groupName": "基础配置",
+      "tableFields": [
+        "rule_key",
+        "rule_name",
+        "trigger_type",
+        "days_before_deadline",
+        "enabled"
+      ],
+      "fields": [
+        {
+          "name": "rule_key",
+          "label": "规则 Key",
+          "required": true
+        },
+        {
+          "name": "rule_name",
+          "label": "规则名称",
+          "required": true
+        },
+        {
+          "name": "trigger_type",
+          "label": "触发类型",
+          "required": true
+        },
+        {
+          "name": "days_before_deadline",
+          "label": "提前天数",
+          "type": "number",
+          "default": 1
+        },
+        {
+          "name": "repeat_interval_hours",
+          "label": "重复间隔小时",
+          "type": "number",
+          "default": 24
+        },
+        {
+          "name": "max_send_count",
+          "label": "最大发送次数",
+          "type": "number",
+          "default": 3
+        },
+        {
+          "name": "skip_holidays",
+          "label": "跳过节假日",
+          "type": "boolean",
+          "default": true
+        },
+        {
+          "name": "enabled",
+          "label": "启用",
+          "type": "boolean",
+          "default": true
+        }
+      ]
+    },
+    {
+      "id": "status",
+      "title": "状态字典",
+      "icon": "S",
+      "type": "crud",
+      "resource": "status-dicts",
+      "hint": "维护督办事项状态流转字典。",
+      "groupName": "基础配置",
+      "tableFields": [
+        "status_key",
+        "status_name",
+        "status_group",
+        "sort_order",
+        "is_terminal",
+        "enabled"
+      ],
+      "fields": [
+        {
+          "name": "status_key",
+          "label": "状态 Key",
+          "required": true
+        },
+        {
+          "name": "status_name",
+          "label": "状态名称",
+          "required": true
+        },
+        {
+          "name": "status_group",
+          "label": "状态分组",
+          "default": "supervision_item"
+        },
+        {
+          "name": "sort_order",
+          "label": "排序",
+          "type": "number",
+          "default": 0
+        },
+        {
+          "name": "is_terminal",
+          "label": "终态",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "enabled",
+          "label": "启用",
+          "type": "boolean",
+          "default": true
+        }
+      ]
+    },
+    {
+      "id": "menu",
+      "title": "菜单配置",
+      "icon": "N",
+      "type": "crud",
+      "resource": "admin-menus",
+      "hint": "维护后台左侧菜单、绑定资源和表单字段。",
+      "groupName": "基础配置",
+      "tableFields": [
+        "menu_id",
+        "title",
+        "menu_type",
+        "resource",
+        "sort_order",
+        "enabled"
+      ],
+      "fields": [
+        {
+          "name": "menu_id",
+          "label": "菜单 Key",
+          "required": true
+        },
+        {
+          "name": "title",
+          "label": "菜单名称",
+          "required": true
+        },
+        {
+          "name": "icon",
+          "label": "图标文本",
+          "default": "N"
+        },
+        {
+          "name": "menu_type",
+          "label": "菜单类型",
+          "default": "crud"
+        },
+        {
+          "name": "resource",
+          "label": "绑定资源"
+        },
+        {
+          "name": "hint",
+          "label": "说明",
+          "type": "textarea"
+        },
+        {
+          "name": "group_name",
+          "label": "分组名称",
+          "default": "基础配置"
+        },
+        {
+          "name": "sort_order",
+          "label": "排序",
+          "type": "number",
+          "default": 0
+        },
+        {
+          "name": "table_fields",
+          "label": "列表字段 JSON",
+          "type": "json",
+          "default": "[]"
+        },
+        {
+          "name": "form_fields",
+          "label": "表单字段 JSON",
+          "type": "json",
+          "default": "[]"
+        },
+        {
+          "name": "enabled",
+          "label": "启用",
+          "type": "boolean",
+          "default": true
+        }
+      ]
+    }
+  ]
+}

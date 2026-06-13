@@ -1,0 +1,11 @@
+server:
+  port: ${SERVER_PORT:8010}
+
+spring:
+  flyway:
+    enabled: ${FLYWAY_ENABLED:true}
+
+logging:
+  level:
+    root: INFO
+    com.sherry.supervision: INFO

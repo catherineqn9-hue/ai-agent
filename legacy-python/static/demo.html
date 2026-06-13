@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sherry 对话智能体 MVP 演示</title>
+  <style>
+    :root {
+      --bg: #f5f6f8;
+      --panel: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --line: #d1d5db;
+      --soft: #f3f4f6;
+      --dark: #111827;
+      --ok: #14532d;
+      --warn: #92400e;
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+    }
+
+    header {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #9ca3af;
+    }
+
+    .dot.ok { background: #16a34a; }
+    .dot.err { background: #dc2626; }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(460px, 1.25fr) minmax(360px, 0.75fr);
+      gap: 18px;
+      padding: 18px;
+      height: calc(100vh - 64px);
+      min-height: 620px;
+    }
+
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .section-head {
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--line);
+      background: #fafafa;
+    }
+
+    .section-head strong { font-size: 15px; }
+
+    .tag {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 12px;
+      color: var(--muted);
+      background: #fff;
+    }
+
+    .chat {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+
+    .quick {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    button {
+      border: 1px solid var(--dark);
+      background: var(--dark);
+      color: #fff;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: #fff;
+      color: var(--dark);
+      border-color: var(--line);
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .messages {
+      padding: 18px;
+      overflow: auto;
+      background: #fbfbfc;
+    }
+
+    .msg {
+      max-width: 78%;
+      margin-bottom: 14px;
+      padding: 11px 13px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      font-size: 14px;
+    }
+
+    .msg.user {
+      margin-left: auto;
+      background: #111827;
+      color: #fff;
+      border-color: #111827;
+    }
+
+    .msg.assistant {
+      background: #fff;
+    }
+
+    .msg.system {
+      max-width: 100%;
+      background: #f9fafb;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .composer {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      padding: 14px 16px;
+      border-top: 1px solid var(--line);
+      background: #fff;
+    }
+
+    textarea {
+      resize: none;
+      height: 58px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px;
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1.4;
+      outline: none;
+    }
+
+    textarea:focus {
+      border-color: #111827;
+    }
+
+    .side {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+    }
+
+    .meta {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      gap: 9px;
+    }
+
+    .kv {
+      display: grid;
+      grid-template-columns: 88px 1fr;
+      gap: 10px;
+      font-size: 13px;
+      align-items: start;
+    }
+
+    .kv span:first-child {
+      color: var(--muted);
+    }
+
+    .mono {
+      font-family: Consolas, "Cascadia Code", monospace;
+      word-break: break-all;
+    }
+
+    .slots {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .slot-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .slot {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 9px;
+      min-height: 52px;
+      background: #fff;
+    }
+
+    .slot label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 5px;
+    }
+
+    .slot div {
+      font-size: 14px;
+      word-break: break-word;
+    }
+
+    .trace {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .trace-list {
+      overflow: auto;
+      padding: 12px 16px 16px;
+    }
+
+    .trace-item {
+      border-left: 2px solid #111827;
+      padding: 0 0 13px 12px;
+      margin-left: 4px;
+      font-size: 13px;
+    }
+
+    .trace-item strong {
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .trace-item span {
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .empty {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 920px) {
+      main {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+      .chat { min-height: 640px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Sherry 对话智能体 MVP 演示</h1>
+    <div class="status"><span id="healthDot" class="dot"></span><span id="healthText">检查服务中...</span></div>
+  </header>
+
+  <main>
+    <section class="chat">
+      <div class="section-head">
+        <strong>对话演示</strong>
+        <span class="tag">一期：任务型对话闭环</span>
+      </div>
+
+      <div class="quick">
+        <button class="secondary" id="btnExample1">样例 1：信息不足</button>
+        <button class="secondary" id="btnExample2">样例 2：补充信息</button>
+        <button class="secondary" id="btnExample3">样例 3：完整输入</button>
+        <button class="secondary" id="btnReset">重置会话</button>
+      </div>
+
+      <div id="messages" class="messages">
+        <div class="msg system">建议先点“样例 1”，系统会主动追问；再点“样例 2”，系统会沿同一 thread_id 继续回复。</div>
+      </div>
+
+      <div class="composer">
+        <textarea id="input" placeholder="输入任务，例如：帮我跟进一下这个事情"></textarea>
+        <button id="send">发送</button>
+      </div>
+    </section>
+
+    <section class="side">
+      <div class="section-head">
+        <strong>状态与解释</strong>
+        <span id="stateTag" class="tag">未开始</span>
+      </div>
+
+      <div class="meta">
+        <div class="kv"><span>thread_id</span><div id="threadId" class="mono">-</div></div>
+        <div class="kv"><span>intent</span><div id="intent" class="mono">-</div></div>
+        <div class="kv"><span>status</span><div id="status" class="mono">-</div></div>
+        <div class="kv"><span>trace_id</span><div id="traceId" class="mono">-</div></div>
+      </div>
+
+      <div class="slots">
+        <strong>槽位 Slot Filling</strong>
+        <div class="slot-grid">
+          <div class="slot"><label>任务事项 task</label><div id="slotTask">-</div></div>
+          <div class="slot"><label>涉及对象 owner</label><div id="slotOwner">-</div></div>
+          <div class="slot"><label>完成时间 deadline</label><div id="slotDeadline">-</div></div>
+          <div class="slot"><label>目标 goal</label><div id="slotGoal">-</div></div>
+        </div>
+      </div>
+
+      <div class="trace">
+        <div class="section-head">
+          <strong>LangGraph 执行轨迹</strong>
+          <span class="tag">trace</span>
+        </div>
+        <div id="trace" class="trace-list">
+          <div class="empty">发送消息后会显示节点执行过程。</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const API = "";
+    let threadId = null;
+    const $ = (id) => document.getElementById(id);
+
+    const messagesEl = $("messages");
+    const inputEl = $("input");
+    const sendBtn = $("send");
+
+    function appendMessage(role, text) {
+      const el = document.createElement("div");
+      el.className = `msg ${role}`;
+      el.textContent = text;
+      messagesEl.appendChild(el);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function setLoading(isLoading) {
+      sendBtn.disabled = isLoading;
+      sendBtn.textContent = isLoading ? "发送中..." : "发送";
+    }
+
+    async function checkHealth() {
+      try {
+        const res = await fetch(`${API}/health`);
+        if (!res.ok) throw new Error("health failed");
+        $("healthDot").className = "dot ok";
+        $("healthText").textContent = "服务正常";
+      } catch (error) {
+        $("healthDot").className = "dot err";
+        $("healthText").textContent = "服务未连接";
+      }
+    }
+
+    async function sendMessage(text) {
+      const message = (text ?? inputEl.value).trim();
+      if (!message) return;
+      appendMessage("user", message);
+      inputEl.value = "";
+      setLoading(true);
+
+      try {
+        const endpoint = threadId ? "/api/v1/chat/resume" : "/api/v1/chat/run";
+        const payload = { user_id: "demo_user", message };
+        if (threadId) payload.thread_id = threadId;
+
+        const res = await fetch(`${API}${endpoint}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "接口调用失败");
+
+        threadId = data.thread_id;
+        appendMessage("assistant", data.answer);
+        renderState(data);
+      } catch (error) {
+        appendMessage("assistant", `调用失败：${error.message}`);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function renderState(data) {
+      $("threadId").textContent = data.thread_id || "-";
+      $("intent").textContent = data.intent || "-";
+      $("status").textContent = data.status || "-";
+      $("traceId").textContent = data.trace_id || "-";
+      $("stateTag").textContent = data.need_clarification ? "等待补充" : "已生成建议";
+      $("stateTag").style.color = data.need_clarification ? "var(--warn)" : "var(--ok)";
+
+      const slots = data.slots || {};
+      $("slotTask").textContent = slots.task || "-";
+      $("slotOwner").textContent = slots.owner || "-";
+      $("slotDeadline").textContent = slots.deadline || "-";
+      $("slotGoal").textContent = slots.goal || "-";
+
+      const traceEl = $("trace");
+      traceEl.innerHTML = "";
+      (data.trace || []).forEach((item) => {
+        const el = document.createElement("div");
+        el.className = "trace-item";
+        el.innerHTML = `<strong>${escapeHtml(item.node)}</strong><span>${escapeHtml(item.detail)}</span>`;
+        traceEl.appendChild(el);
+      });
+      if (!data.trace || data.trace.length === 0) {
+        traceEl.innerHTML = `<div class="empty">暂无执行轨迹。</div>`;
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function reset() {
+      threadId = null;
+      messagesEl.innerHTML = '<div class="msg system">会话已重置。建议先点“样例 1”，再点“样例 2”。</div>';
+      renderState({ slots: {}, trace: [], need_clarification: false });
+      $("threadId").textContent = "-";
+      $("stateTag").textContent = "未开始";
+      $("stateTag").style.color = "var(--muted)";
+    }
+
+    sendBtn.addEventListener("click", () => sendMessage());
+    inputEl.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+      }
+    });
+    $("btnExample1").addEventListener("click", () => sendMessage("帮我跟进一下这个事情"));
+    $("btnExample2").addEventListener("click", () => sendMessage("是关于OA权限迁移的，涉及研发部，月底前完成"));
+    $("btnExample3").addEventListener("click", () => sendMessage("帮我跟进OA权限迁移，涉及研发部，月底前完成"));
+    $("btnReset").addEventListener("click", reset);
+
+    checkHealth();
+  </script>
+</body>
+</html>

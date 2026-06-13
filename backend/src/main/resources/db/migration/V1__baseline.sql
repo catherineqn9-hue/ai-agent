@@ -1,0 +1,59 @@
+-- Keep this migration idempotent because the Python MVP may have already created tables.
+CREATE TABLE IF NOT EXISTS supervision_item (
+    id UUID PRIMARY KEY,
+    batch_id UUID,
+    item_no VARCHAR(80) NOT NULL UNIQUE,
+    title VARCHAR(300) NOT NULL,
+    description TEXT,
+    source_row_no INTEGER,
+    priority VARCHAR(30) NOT NULL DEFAULT 'normal',
+    status VARCHAR(40) NOT NULL DEFAULT 'pending_assign',
+    deadline_at TIMESTAMPTZ,
+    completed_at TIMESTAMPTZ,
+    created_by VARCHAR(80) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS progress_feedback (
+    id UUID PRIMARY KEY,
+    item_id UUID NOT NULL REFERENCES supervision_item(id) ON DELETE CASCADE,
+    assignee_id UUID,
+    feedback_user_id VARCHAR(80) NOT NULL,
+    feedback_user_name VARCHAR(120) NOT NULL,
+    progress_percent INTEGER NOT NULL DEFAULT 0,
+    content TEXT NOT NULL,
+    risk_note TEXT,
+    attachment_ids JSONB NOT NULL DEFAULT '[]'::jsonb,
+    feedback_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS excel_import_template (
+    id UUID PRIMARY KEY,
+    template_code VARCHAR(80) NOT NULL UNIQUE,
+    template_name VARCHAR(120) NOT NULL,
+    description TEXT,
+    handler_code VARCHAR(80) NOT NULL,
+    source_columns JSONB NOT NULL DEFAULT '[]'::jsonb,
+    entity_fields JSONB NOT NULL DEFAULT '[]'::jsonb,
+    mapping_config JSONB NOT NULL DEFAULT '{}'::jsonb,
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS supervision_import_error (
+    id UUID PRIMARY KEY,
+    batch_id UUID NOT NULL,
+    row_no INTEGER,
+    item_no VARCHAR(80),
+    title VARCHAR(300),
+    error_message TEXT NOT NULL,
+    raw_data JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_supervision_import_error_batch_id ON supervision_import_error(batch_id);

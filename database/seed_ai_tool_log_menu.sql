@@ -1,0 +1,50 @@
+INSERT INTO admin_menu_config (
+    id,
+    menu_id,
+    title,
+    icon,
+    menu_type,
+    resource,
+    hint,
+    group_name,
+    sort_order,
+    table_fields,
+    form_fields,
+    enabled
+) VALUES (
+    gen_random_uuid(),
+    'ai_tool_logs',
+    'AI 调用日志',
+    'L',
+    'crud',
+    'ai-tool-call-logs',
+    '查看 AI 通过业务接口办事的调用记录、入参、出参、状态和耗时。',
+    '智能助手',
+    20,
+    '["created_at", "tool_name", "status", "duration_ms", "error_message", "request_id"]'::jsonb,
+    '[
+        {"name":"created_at","label":"调用时间"},
+        {"name":"request_id","label":"请求 ID"},
+        {"name":"thread_id","label":"会话 ID"},
+        {"name":"agent_key","label":"Agent"},
+        {"name":"tool_name","label":"工具名称"},
+        {"name":"input_payload","label":"入参","type":"json"},
+        {"name":"output_payload","label":"出参","type":"json"},
+        {"name":"status","label":"状态"},
+        {"name":"error_message","label":"错误信息"},
+        {"name":"duration_ms","label":"耗时(ms)"}
+    ]'::jsonb,
+    true
+)
+ON CONFLICT (menu_id) DO UPDATE SET
+    title = EXCLUDED.title,
+    icon = EXCLUDED.icon,
+    menu_type = EXCLUDED.menu_type,
+    resource = EXCLUDED.resource,
+    hint = EXCLUDED.hint,
+    group_name = EXCLUDED.group_name,
+    sort_order = EXCLUDED.sort_order,
+    table_fields = EXCLUDED.table_fields,
+    form_fields = EXCLUDED.form_fields,
+    enabled = EXCLUDED.enabled,
+    updated_at = now();

@@ -1,0 +1,74 @@
+runtime:
+  default_provider: langchain
+  fallback_provider: agentscope
+  trace_enabled: true
+
+plugins:
+  - name: supervision_core
+    enabled: true
+    description: Core agents for Sherry supervision workflow.
+    agents:
+      - task_parser
+      - owner_matcher
+      - progress_monitor
+      - reminder_generator
+      - workflow_orchestrator
+
+agents:
+  task_parser:
+    enabled: true
+    provider: langchain
+    role: task_parser
+    description: Parse supervision Excel rows or text into structured events.
+    inputs:
+      - excel_file
+      - task_text
+    outputs:
+      - supervision_events
+  owner_matcher:
+    enabled: true
+    provider: langchain
+    role: owner_matcher
+    description: Match owners through user-service adapters.
+    inputs:
+      - supervision_events
+      - user_directory
+    outputs:
+      - assigned_events
+  progress_monitor:
+    enabled: true
+    provider: langchain
+    role: progress_monitor
+    description: Track event status and normalize progress feedback.
+    inputs:
+      - assigned_events
+      - progress_feedback
+    outputs:
+      - event_status_updates
+  reminder_generator:
+    enabled: true
+    provider: langchain
+    role: reminder_generator
+    description: Generate IM reminder messages for due or overdue events.
+    inputs:
+      - assigned_events
+      - status_updates
+    outputs:
+      - reminder_messages
+  workflow_orchestrator:
+    enabled: true
+    provider: langchain
+    role: workflow_orchestrator
+    description: Chain agents into a complete supervision process.
+    inputs:
+      - supervision_request
+    outputs:
+      - workflow_result
+
+integrations:
+  user_service:
+    enabled: false
+    base_url: ""
+  im_service:
+    enabled: false
+    base_url: ""

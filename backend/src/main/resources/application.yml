@@ -1,0 +1,60 @@
+server:
+  port: ${SERVER_PORT:8011}
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+spring:
+  application:
+    name: sherry-supervision
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://127.0.0.1:5432/sherry}
+    username: ${DATABASE_USERNAME:sherry}
+    password: ${DATABASE_PASSWORD:sherry_dev_password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:10}
+      minimum-idle: ${DB_POOL_MIN_IDLE:2}
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  flyway:
+    enabled: ${FLYWAY_ENABLED:false}
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+  jackson:
+    default-property-inclusion: non_null
+    property-naming-strategy: SNAKE_CASE
+    time-zone: Asia/Shanghai
+
+mybatis-plus:
+  type-handlers-package: com.sherry.supervision.config
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    banner: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+langchain4j:
+  open-ai:
+    chat-model:
+      api-key: ${KIMI_API_KEY:}
+      base-url: ${KIMI_BASE_URL:https://api.moonshot.cn/v1}
+      model-name: ${KIMI_MODEL:moonshot-v1-8k}
+      log-requests: ${LLM_LOG_REQUESTS:false}
+      log-responses: ${LLM_LOG_RESPONSES:false}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html

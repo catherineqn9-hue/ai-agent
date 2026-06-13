@@ -1,0 +1,21 @@
+# Java
+backend/target/
+backend/logs/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Python legacy/local
+.env
+*.local
+.venv/
+.pytest_cache/
+legacy-python/**/__pycache__/
+legacy-python/.pytest_cache/
+
+# IDE and OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

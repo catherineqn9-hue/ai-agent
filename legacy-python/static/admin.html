@@ -1,0 +1,1409 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="admin-default-page" content="AI 助手问答" />
+  <title>Sherry 智能督办后台</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --surface: #ffffff;
+      --surface-soft: #f8fafc;
+      --text: #111827;
+      --muted: #64748b;
+      --line: #d7dde5;
+      --accent: #0f766e;
+      --accent-weak: #e7f5f2;
+      --accent-dark: #115e59;
+      --danger: #b42318;
+      --sidebar: #141c26;
+      --sidebar-soft: #22303d;
+      --sidebar-line: rgba(255, 255, 255, 0.08);
+      --radius: 8px;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+    [v-cloak] { display: none; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+    }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 252px 1fr;
+      min-height: 100vh;
+    }
+
+    aside {
+      background: var(--sidebar);
+      color: #e5edf5;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      border-right: 1px solid #0d131a;
+    }
+
+    .brand {
+      height: 72px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      padding: 0 18px;
+      border-bottom: 1px solid var(--sidebar-line);
+    }
+
+    .brand strong {
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+
+    .brand span {
+      color: #8fa2b8;
+      font-size: 12px;
+    }
+
+    .side-summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 12px;
+      border-bottom: 1px solid var(--sidebar-line);
+    }
+
+    .side-stat {
+      border: 1px solid var(--sidebar-line);
+      border-radius: 8px;
+      padding: 9px 8px;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .side-stat b {
+      display: block;
+      font-size: 15px;
+      margin-bottom: 2px;
+    }
+
+    .side-stat span {
+      color: #8fa2b8;
+      font-size: 11px;
+    }
+
+    nav {
+      padding: 12px;
+      display: grid;
+      align-content: start;
+      gap: 5px;
+      overflow: auto;
+    }
+
+    .nav-group {
+      color: #7f91a7;
+      font-size: 11px;
+      padding: 12px 12px 5px;
+    }
+
+    .nav-btn {
+      width: 100%;
+      min-height: 42px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: #cbd5e1;
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      align-items: center;
+      gap: 10px;
+      padding: 0 12px;
+      font-size: 14px;
+      text-align: left;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-btn.active {
+      background: var(--sidebar-soft);
+      color: #fff;
+      box-shadow: inset 3px 0 0 #2dd4bf;
+    }
+
+    .nav-icon {
+      width: 28px;
+      height: 28px;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 7px;
+      background: rgba(148, 163, 184, 0.12);
+      color: #cde7ff;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .nav-btn.active .nav-icon {
+      background: rgba(45, 212, 191, 0.16);
+      color: #99f6e4;
+    }
+
+    .aside-foot {
+      padding: 14px 16px;
+      color: #94a3b8;
+      font-size: 12px;
+      border-top: 1px solid var(--sidebar-line);
+    }
+
+    main {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: 72px 1fr;
+    }
+
+    header {
+      background: rgba(255, 255, 255, 0.86);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 19px;
+      letter-spacing: 0;
+    }
+
+    .header-subtitle {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .health {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 99px;
+      background: #94a3b8;
+    }
+
+    .dot.ok { background: #16a34a; }
+    .dot.err { background: #dc2626; }
+
+    .content {
+      padding: 22px;
+      min-width: 0;
+    }
+
+    .page {
+      height: calc(100vh - 116px);
+      min-height: 620px;
+    }
+
+    .assistant-page {
+      display: grid;
+      justify-content: center;
+    }
+
+    .chat-panel {
+      display: grid;
+      grid-template-rows: 1fr auto;
+      height: 100%;
+      width: min(980px, 100%);
+      min-width: 0;
+    }
+
+    .messages {
+      overflow: auto;
+      padding: 16px 4px 20px;
+    }
+
+    .welcome {
+      margin: 34px auto 0;
+      width: min(760px, 100%);
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .welcome h2 {
+      margin: 0 0 10px;
+      color: var(--text);
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .quick-prompts {
+      margin-top: 18px;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .quick-prompts button {
+      background: #fff;
+      color: var(--text);
+      border-color: var(--line);
+      box-shadow: none;
+    }
+
+    .msg {
+      max-width: 76%;
+      margin-bottom: 12px;
+      padding: 11px 13px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      line-height: 1.55;
+      white-space: pre-wrap;
+      font-size: 14px;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    }
+
+    .msg.user {
+      margin-left: auto;
+      background: var(--accent-dark);
+      border-color: var(--accent-dark);
+      color: #fff;
+    }
+
+    .composer {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    button {
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #fff;
+      height: 34px;
+      border-radius: 7px;
+      padding: 0 12px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    button.secondary {
+      background: #fff;
+      color: var(--text);
+      border-color: var(--line);
+    }
+
+    button.danger {
+      background: #fff;
+      color: var(--danger);
+      border-color: #f3b6b0;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    textarea,
+    input {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 9px 10px;
+      font: inherit;
+      font-size: 14px;
+      outline: none;
+      background: #fff;
+      min-width: 0;
+    }
+
+    textarea:focus,
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.08);
+    }
+
+    .composer textarea {
+      resize: none;
+      height: 58px;
+      border-color: transparent;
+    }
+
+    .config-page {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 16px;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+    }
+
+    .toolbar-title {
+      display: grid;
+      gap: 4px;
+    }
+
+    .toolbar-title strong { font-size: 15px; }
+    .toolbar-title span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .config-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      min-height: 0;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      min-width: 0;
+      overflow: hidden;
+      box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+    }
+
+    .panel-head {
+      height: 50px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface-soft);
+    }
+
+    .panel-head strong { font-size: 15px; }
+
+    .tag {
+      font-size: 12px;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 9px;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 11px 12px;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 600;
+      background: var(--surface-soft);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tbody tr:hover { background: #f8fbfb; }
+
+    .table-wrap {
+      height: 100%;
+      overflow: auto;
+    }
+
+    .mono {
+      font-family: Consolas, "Cascadia Code", monospace;
+      word-break: break-all;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      border-radius: 999px;
+      padding: 0 8px;
+      font-size: 12px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      background: #fff;
+    }
+
+    .pill.on {
+      color: #166534;
+      border-color: #bbf7d0;
+      background: #f0fdf4;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      border-radius: 999px;
+      padding: 0 8px;
+      font-size: 12px;
+      border: 1px solid #cbd5e1;
+      color: #475569;
+      background: #f8fafc;
+    }
+
+    .status-pill.completed {
+      color: #166534;
+      border-color: #bbf7d0;
+      background: #f0fdf4;
+    }
+
+    .status-pill.overdue,
+    .status-pill.cancelled {
+      color: #991b1b;
+      border-color: #fecaca;
+      background: #fef2f2;
+    }
+
+    .status-pill.in-progress,
+    .status-pill.pending-confirm {
+      color: #075985;
+      border-color: #bae6fd;
+      background: #f0f9ff;
+    }
+
+    .form {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+      overflow: auto;
+      max-height: min(68vh, 640px);
+    }
+
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(15, 23, 42, 0.42);
+    }
+
+    .modal {
+      width: min(720px, 100%);
+      max-height: calc(100vh - 48px);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 24px 70px rgba(15, 23, 42, 0.24);
+    }
+
+    .modal-head {
+      height: 56px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface-soft);
+    }
+
+    .modal-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .modal-title strong {
+      font-size: 15px;
+      white-space: nowrap;
+    }
+
+    .icon-btn {
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 8px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .field select,
+    .field textarea {
+      width: 100%;
+    }
+
+    .field select {
+      height: 38px;
+      border: 1px solid #cbd5d7;
+      border-radius: 8px;
+      padding: 0 10px;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    .field textarea {
+      min-height: 104px;
+      resize: vertical;
+      font-family: Consolas, "Cascadia Code", monospace;
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .check-row input {
+      width: 16px;
+      height: 16px;
+      padding: 0;
+    }
+
+    .form-actions,
+    .row-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .form-actions { justify-content: flex-end; }
+
+    .empty {
+      color: var(--muted);
+      font-size: 13px;
+      padding: 14px;
+    }
+
+    @media (max-width: 980px) {
+      .config-layout { grid-template-columns: 1fr; }
+      .page { height: auto; }
+    }
+
+    @media (max-width: 720px) {
+      .shell { grid-template-columns: 1fr; }
+      aside { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app" v-cloak>
+    <div class="shell">
+      <aside>
+        <div class="brand">
+          <strong>Sherry 督办后台</strong>
+          <span>Vue + FastAPI + LangGraph</span>
+        </div>
+        <div class="side-summary">
+          <div class="side-stat"><b>{{ crudMenuCount }}</b><span>配置页</span></div>
+          <div class="side-stat"><b>{{ configItems.length }}</b><span>当前项</span></div>
+          <div class="side-stat"><b>{{ healthOk ? "ON" : "OFF" }}</b><span>服务</span></div>
+        </div>
+        <nav>
+          <template v-for="menu in menus" :key="menu.id">
+            <div v-if="menu.groupLabel" class="nav-group">{{ menu.groupLabel }}</div>
+            <button
+              class="nav-btn"
+              :class="{ active: currentMenu.id === menu.id }"
+              type="button"
+              @click="switchMenu(menu.id)"
+            >
+              <span class="nav-icon">{{ menu.icon }}</span>
+              <span>{{ menu.title }}</span>
+            </button>
+          </template>
+        </nav>
+        <div class="aside-foot">菜单来自数据库 /api/v1/admin-menus</div>
+      </aside>
+
+      <main>
+        <header>
+          <div>
+            <h1>{{ currentMenu.title }}</h1>
+            <div class="header-subtitle">{{ currentMenu.hint || "智能督办配置中心" }}</div>
+          </div>
+          <div class="health">
+            <span class="dot" :class="healthOk ? 'ok' : 'err'"></span>
+            <span>{{ healthText }}</span>
+          </div>
+        </header>
+
+        <div class="content">
+          <section v-if="currentMenu.type === 'assistant'" class="page assistant-page">
+            <div class="chat-panel">
+              <div ref="messagesEl" class="messages">
+                <div v-if="chatMessages.length === 0" class="welcome">
+                  <h2>有什么督办事项需要我帮你处理？</h2>
+                  <p>AI 会通过后端接口读取配置、生成结构化参数，再调用业务能力完成督办动作。</p>
+                  <div class="quick-prompts">
+                    <button type="button" @click="sendQuick('帮我解析一份督办 Excel')">解析督办 Excel</button>
+                    <button type="button" @click="sendQuick('帮我查看临期催办规则')">查看催办规则</button>
+                    <button type="button" @click="sendQuick('帮我配置责任人匹配接口')">配置接口</button>
+                  </div>
+                </div>
+                <div
+                  v-for="(message, index) in chatMessages"
+                  :key="index"
+                  class="msg"
+                  :class="message.role"
+                >
+                  {{ message.content }}
+                </div>
+              </div>
+              <div class="composer">
+                <textarea
+                  v-model="chatInput"
+                  placeholder="输入督办事项或进度反馈"
+                  @keydown.enter.exact.prevent="sendChat()"
+                ></textarea>
+                <button type="button" :disabled="chatSending" @click="sendChat">
+                  {{ chatSending ? "发送中" : "发送" }}
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section v-else-if="currentMenu.type === 'supervision'" class="page config-page">
+            <div class="toolbar">
+              <div class="toolbar-title">
+                <strong>{{ currentMenu.title }}</strong>
+                <span>{{ currentMenu.hint }}</span>
+              </div>
+              <div class="row-actions">
+                <button type="button" class="secondary" @click="openImportDialog">导入 Excel</button>
+                <button type="button" @click="openSupervisionForm()">新增事项</button>
+              </div>
+            </div>
+
+            <div class="config-layout">
+              <div class="panel">
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th style="width: 16%">事项编号</th>
+                        <th>标题</th>
+                        <th style="width: 110px">优先级</th>
+                        <th style="width: 130px">状态</th>
+                        <th style="width: 170px">截止时间</th>
+                        <th style="width: 110px">创建人</th>
+                        <th style="width: 150px">操作</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="item in supervisionItems" :key="item.id">
+                        <td class="mono">{{ item.item_no }}</td>
+                        <td>{{ item.title }}</td>
+                        <td>{{ priorityLabel(item.priority) }}</td>
+                        <td>
+                          <span class="status-pill" :class="statusClass(item.status)">
+                            {{ statusLabel(item.status) }}
+                          </span>
+                        </td>
+                        <td>{{ formatDateTime(item.deadline_at) }}</td>
+                        <td>{{ item.created_by }}</td>
+                        <td>
+                          <div class="row-actions">
+                            <button type="button" class="secondary" @click="openSupervisionForm(item)">编辑</button>
+                            <button type="button" class="danger" @click="deleteSupervisionItem(item.id)">删除</button>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr v-if="supervisionItems.length === 0">
+                        <td colspan="7">
+                          <div class="empty">暂无督办事项。</div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="supervisionFormOpen" class="modal-mask" @click.self="closeSupervisionForm">
+              <div class="modal" role="dialog" aria-modal="true">
+                <div class="modal-head">
+                  <div class="modal-title">
+                    <strong>{{ supervisionForm.id ? "编辑事项" : "新增事项" }}</strong>
+                    <span class="tag">supervision-items</span>
+                  </div>
+                  <button type="button" class="secondary icon-btn" title="关闭" @click="closeSupervisionForm">×</button>
+                </div>
+                <form class="form" @submit.prevent="saveSupervisionItem">
+                  <div class="field">
+                    <label for="item_no">事项编号</label>
+                    <input id="item_no" v-model="supervisionForm.values.item_no" placeholder="留空自动生成" />
+                  </div>
+                  <div class="field">
+                    <label for="item_title">标题</label>
+                    <input id="item_title" v-model="supervisionForm.values.title" required />
+                  </div>
+                  <div class="field">
+                    <label for="item_description">描述</label>
+                    <textarea id="item_description" v-model="supervisionForm.values.description"></textarea>
+                  </div>
+                  <div class="field">
+                    <label for="item_priority">优先级</label>
+                    <select id="item_priority" v-model="supervisionForm.values.priority">
+                      <option value="low">低</option>
+                      <option value="normal">普通</option>
+                      <option value="high">高</option>
+                      <option value="urgent">紧急</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="item_status">状态</label>
+                    <select id="item_status" v-model="supervisionForm.values.status">
+                      <option v-for="status in statusOptions" :key="status.value" :value="status.value">
+                        {{ status.label }}
+                      </option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="item_deadline">截止时间</label>
+                    <input id="item_deadline" v-model="supervisionForm.values.deadline_at" type="datetime-local" />
+                  </div>
+                  <div class="field">
+                    <label for="item_created_by">创建人</label>
+                    <input id="item_created_by" v-model="supervisionForm.values.created_by" />
+                  </div>
+                  <div class="form-actions">
+                    <button type="button" class="secondary" @click="closeSupervisionForm">取消</button>
+                    <button type="submit">保存</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <div v-if="importFormOpen" class="modal-mask" @click.self="closeImportDialog">
+              <div class="modal" role="dialog" aria-modal="true">
+                <div class="modal-head">
+                  <div class="modal-title">
+                    <strong>导入 Excel</strong>
+                    <span class="tag">选择模板</span>
+                  </div>
+                  <button type="button" class="secondary icon-btn" title="关闭" @click="closeImportDialog">×</button>
+                </div>
+                <form class="form" @submit.prevent="importSupervisionExcel">
+                  <div class="field">
+                    <label for="import_template">导入模板</label>
+                    <select id="import_template" v-model="importForm.template_code" required>
+                      <option
+                        v-for="template in importTemplates"
+                        :key="template.template_code"
+                        :value="template.template_code"
+                      >
+                        {{ template.template_name }}
+                      </option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="import_file">Excel 文件</label>
+                    <input
+                      id="import_file"
+                      type="file"
+                      accept=".xlsx,.xlsm"
+                      required
+                      @change="handleImportFileChange"
+                    />
+                  </div>
+                  <div class="empty">
+                    {{ selectedImportTemplate?.description || "请选择模板后上传 Excel 文件。" }}
+                  </div>
+                  <div class="form-actions">
+                    <button type="button" class="secondary" @click="closeImportDialog">取消</button>
+                    <button type="submit">开始导入</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </section>
+
+          <section v-else class="page config-page">
+            <div class="toolbar">
+              <div class="toolbar-title">
+                <strong>{{ currentMenu.title }}</strong>
+                <span>{{ currentMenu.hint }}</span>
+              </div>
+              <button type="button" @click="openCreateConfig">新增配置</button>
+            </div>
+
+            <div class="config-layout">
+              <div class="panel">
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th v-for="field in currentMenu.tableFields" :key="field" :style="columnStyle(field)">
+                          {{ fieldLabel(field) }}
+                        </th>
+                        <th style="width: 150px">操作</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="item in configItems" :key="item.id">
+                        <td v-for="field in currentMenu.tableFields" :key="field" :class="{ mono: isMono(field) }">
+                          <span v-if="isBooleanField(field)" class="pill" :class="{ on: item[field] }">
+                            {{ item[field] ? "启用" : "停用" }}
+                          </span>
+                          <span v-else>{{ formatCell(item[field]) }}</span>
+                        </td>
+                        <td>
+                          <div class="row-actions">
+                            <button type="button" class="secondary" @click="editConfig(item)">编辑</button>
+                            <button type="button" class="danger" @click="deleteConfig(item.id)">删除</button>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr v-if="configItems.length === 0">
+                        <td :colspan="currentMenu.tableFields.length + 1">
+                          <div class="empty">暂无配置。</div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+
+            <div v-if="formOpen" class="modal-mask" @click.self="closeConfigForm">
+              <div class="modal" role="dialog" aria-modal="true">
+                <div class="modal-head">
+                  <div class="modal-title">
+                    <strong>{{ form.id ? "编辑配置" : "新增配置" }}</strong>
+                    <span class="tag">{{ currentMenu.resource }}</span>
+                  </div>
+                  <button type="button" class="secondary icon-btn" title="关闭" @click="closeConfigForm">×</button>
+                </div>
+                <form class="form" @submit.prevent="saveConfig">
+                  <template v-for="field in editableFields" :key="field.name">
+                    <label v-if="field.type === 'boolean'" class="check-row">
+                      <input v-model="form.values[field.name]" type="checkbox" />
+                      {{ field.label }}
+                    </label>
+                    <div v-else class="field">
+                      <label :for="field.name">{{ field.label }}</label>
+                      <textarea
+                        v-if="field.type === 'json' || field.type === 'textarea'"
+                        :id="field.name"
+                        v-model="form.values[field.name]"
+                      ></textarea>
+                      <input
+                        v-else
+                        :id="field.name"
+                        v-model="form.values[field.name]"
+                        :type="field.type === 'number' ? 'number' : 'text'"
+                        :required="field.required"
+                      />
+                    </div>
+                  </template>
+                  <div class="form-actions">
+                    <button type="button" class="secondary" @click="clearConfigForm">清空</button>
+                    <button type="button" class="secondary" @click="closeConfigForm">取消</button>
+                    <button type="submit">保存</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js"></script>
+  <script>
+    const { createApp, nextTick } = Vue;
+
+    const fieldLabels = {
+      enabled: "状态",
+      required: "必填",
+      skip_holidays: "跳过节假日",
+      is_terminal: "终态"
+    };
+
+    createApp({
+      data() {
+        return {
+          menus: [],
+          currentMenuId: "assistant",
+          healthOk: false,
+          healthText: "检查服务中...",
+          threadId: null,
+          chatInput: "",
+          chatSending: false,
+          chatMessages: [],
+          configItems: [],
+          formOpen: false,
+          form: { id: "", values: {} },
+          supervisionItems: [],
+          supervisionFormOpen: false,
+          supervisionForm: { id: "", values: {} },
+          importFormOpen: false,
+          importTemplates: [],
+          importForm: { template_code: "", file: null },
+          statusOptions: [
+            { value: "pending_assign", label: "待分派" },
+            { value: "pending_confirm", label: "待确认" },
+            { value: "in_progress", label: "进行中" },
+            { value: "near_due", label: "临期" },
+            { value: "reminded", label: "已催办" },
+            { value: "completed", label: "已完成" },
+            { value: "overdue", label: "已逾期" },
+            { value: "cancelled", label: "已取消" }
+          ]
+        };
+      },
+      computed: {
+        currentMenu() {
+          return this.menus.find((menu) => menu.id === this.currentMenuId)
+            || this.menus[0]
+            || {
+              id: "assistant",
+              title: "AI 助手问答",
+              icon: "AI",
+              type: "assistant",
+              hint: "通过对话调用后端接口能力"
+            };
+        },
+        editableFields() {
+          return this.currentMenu.fields || [];
+        },
+        crudMenuCount() {
+          return this.menus.filter((menu) => menu.type === "crud").length;
+        },
+        selectedImportTemplate() {
+          return this.importTemplates.find(
+            (template) => template.template_code === this.importForm.template_code
+          );
+        }
+      },
+      async mounted() {
+        await this.loadMenuConfig();
+        await this.checkHealth();
+      },
+      methods: {
+        async loadMenuConfig(preferredMenuId) {
+          let data;
+          const activeMenuId = preferredMenuId || this.currentMenuId;
+          try {
+            const response = await fetch("/api/v1/admin-menus");
+            data = await response.json();
+            if (!response.ok) throw new Error(data.detail || "菜单加载失败");
+          } catch (error) {
+            const response = await fetch("/static/admin-menu.json");
+            data = await response.json();
+          }
+          this.menus = this.decorateMenus(data.menus || []);
+          this.currentMenuId = this.menus.some((menu) => menu.id === activeMenuId)
+            ? activeMenuId
+            : this.menus[0]?.id || "assistant";
+        },
+        decorateMenus(menus) {
+          let lastGroup = "";
+          return menus.map((menu) => {
+            const groupName = menu.groupName || (menu.type === "assistant" ? "智能助手" : "基础配置");
+            const groupLabel = groupName !== lastGroup
+              ? groupName
+              : "";
+            lastGroup = groupName;
+            return { ...menu, groupLabel };
+          });
+        },
+        async switchMenu(id) {
+          this.currentMenuId = id;
+          this.closeConfigForm();
+          this.closeSupervisionForm();
+          if (this.currentMenu.type === "supervision") {
+            await this.loadSupervisionItems();
+          } else if (this.currentMenu.type === "crud") {
+            this.clearConfigForm();
+            await this.loadConfigs();
+          } else {
+            this.configItems = [];
+            this.supervisionItems = [];
+          }
+        },
+        async checkHealth() {
+          try {
+            const response = await fetch("/health");
+            if (!response.ok) throw new Error("health failed");
+            this.healthOk = true;
+            this.healthText = "服务正常";
+          } catch (error) {
+            this.healthOk = false;
+            this.healthText = "服务未连接";
+          }
+        },
+        sendQuick(text) {
+          this.chatInput = text;
+          this.sendChat();
+        },
+        async sendChat() {
+          const message = this.chatInput.trim();
+          if (!message || this.chatSending) return;
+          this.chatMessages.push({ role: "user", content: message });
+          this.chatInput = "";
+          this.chatSending = true;
+          await this.scrollMessages();
+
+          try {
+            const endpoint = this.threadId ? "/api/v1/chat/resume" : "/api/v1/chat/run";
+            const payload = { user_id: "admin_user", message };
+            if (this.threadId) payload.thread_id = this.threadId;
+            const response = await fetch(endpoint, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.detail || "接口调用失败");
+            this.threadId = data.thread_id;
+            this.chatMessages.push({ role: "assistant", content: data.answer });
+          } catch (error) {
+            this.chatMessages.push({ role: "assistant", content: `调用失败：${error.message}` });
+          } finally {
+            this.chatSending = false;
+            await this.scrollMessages();
+          }
+        },
+        async scrollMessages() {
+          await nextTick();
+          const el = this.$refs.messagesEl;
+          if (el) el.scrollTop = el.scrollHeight;
+        },
+        async loadConfigs() {
+          const response = await fetch(`/api/v1/basic-configs/${this.currentMenu.resource}`);
+          const data = await response.json();
+          if (!response.ok) {
+            alert(data.detail || "加载失败");
+            return;
+          }
+          this.configItems = data.items || [];
+        },
+        async loadSupervisionItems() {
+          const response = await fetch("/api/v1/supervision-items");
+          const data = await response.json();
+          if (!response.ok) {
+            alert(data.detail || "加载失败");
+            return;
+          }
+          this.supervisionItems = data.items || [];
+        },
+        openSupervisionForm(item) {
+          if (item) {
+            this.supervisionForm = {
+              id: item.id,
+              values: {
+                item_no: item.item_no || "",
+                title: item.title || "",
+                description: item.description || "",
+                priority: item.priority || "normal",
+                status: item.status || "pending_assign",
+                deadline_at: this.toDatetimeLocal(item.deadline_at),
+                created_by: item.created_by || "admin"
+              }
+            };
+          } else {
+            this.clearSupervisionForm();
+          }
+          this.supervisionFormOpen = true;
+        },
+        closeSupervisionForm() {
+          this.supervisionFormOpen = false;
+        },
+        clearSupervisionForm() {
+          this.supervisionForm = {
+            id: "",
+            values: {
+              item_no: "",
+              title: "",
+              description: "",
+              priority: "normal",
+              status: "pending_assign",
+              deadline_at: "",
+              created_by: "admin"
+            }
+          };
+        },
+        async saveSupervisionItem() {
+          const values = this.supervisionForm.values;
+          const payload = {
+            item_no: values.item_no || null,
+            title: values.title,
+            description: values.description || null,
+            priority: values.priority || "normal",
+            status: values.status || "pending_assign",
+            deadline_at: values.deadline_at || null,
+            created_by: values.created_by || "admin"
+          };
+          const url = this.supervisionForm.id
+            ? `/api/v1/supervision-items/${this.supervisionForm.id}`
+            : "/api/v1/supervision-items";
+          const response = await fetch(url, {
+            method: this.supervisionForm.id ? "PUT" : "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          const result = await response.json();
+          if (!response.ok) {
+            alert(result.detail || "保存失败");
+            return;
+          }
+          this.closeSupervisionForm();
+          this.clearSupervisionForm();
+          await this.loadSupervisionItems();
+        },
+        async deleteSupervisionItem(id) {
+          if (!confirm("确认删除这条督办事项？")) return;
+          const response = await fetch(`/api/v1/supervision-items/${id}`, {
+            method: "DELETE"
+          });
+          if (!response.ok) {
+            const data = await response.json();
+            alert(data.detail || "删除失败");
+            return;
+          }
+          await this.loadSupervisionItems();
+        },
+        async loadImportTemplates() {
+          const response = await fetch("/api/v1/supervision-imports/templates");
+          const data = await response.json();
+          if (!response.ok) {
+            alert(data.detail || "模板加载失败");
+            return;
+          }
+          this.importTemplates = data.templates || [];
+          if (!this.importForm.template_code && this.importTemplates.length > 0) {
+            this.importForm.template_code = this.importTemplates[0].template_code;
+          }
+        },
+        async openImportDialog() {
+          await this.loadImportTemplates();
+          this.importForm.file = null;
+          this.importFormOpen = true;
+        },
+        closeImportDialog() {
+          this.importFormOpen = false;
+        },
+        handleImportFileChange(event) {
+          this.importForm.file = event.target.files?.[0] || null;
+        },
+        async importSupervisionExcel() {
+          const file = this.importForm.file;
+          if (!file) {
+            alert("请选择 Excel 文件");
+            return;
+          }
+
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("created_by", "admin");
+          formData.append("template_code", this.importForm.template_code);
+
+          const response = await fetch("/api/v1/supervision-imports/excel", {
+            method: "POST",
+            body: formData
+          });
+          const result = await response.json();
+          if (!response.ok) {
+            alert(result.detail || "导入失败");
+            return;
+          }
+          this.closeImportDialog();
+          await this.loadSupervisionItems();
+          alert(`导入完成：成功 ${result.success_count} 条，失败 ${result.failed_count} 条`);
+        },
+        openCreateConfig() {
+          this.clearConfigForm();
+          this.formOpen = true;
+        },
+        editConfig(item) {
+          const values = {};
+          this.editableFields.forEach((field) => {
+            const value = item[field.name];
+            if (field.type === "json") {
+              values[field.name] = JSON.stringify(value ?? this.defaultJsonValue(field), null, 2);
+            } else {
+              values[field.name] = value ?? this.defaultFieldValue(field);
+            }
+          });
+          this.form = { id: item.id, values };
+          this.formOpen = true;
+        },
+        closeConfigForm() {
+          this.formOpen = false;
+        },
+        async deleteConfig(id) {
+          if (!confirm("确认删除这条配置？")) return;
+          const response = await fetch(`/api/v1/basic-configs/${this.currentMenu.resource}/${id}`, {
+            method: "DELETE"
+          });
+          if (!response.ok) {
+            const data = await response.json();
+            alert(data.detail || "删除失败");
+            return;
+          }
+          this.clearConfigForm();
+          this.closeConfigForm();
+          await this.loadConfigs();
+          if (this.currentMenu.resource === "admin-menus") {
+            await this.loadMenuConfig("menu");
+            if (this.currentMenu.type === "crud") {
+              await this.loadConfigs();
+            } else {
+              this.configItems = [];
+            }
+          }
+        },
+        async saveConfig() {
+          const resourceName = this.currentMenu.resource;
+          const payload = {};
+          for (const field of this.editableFields) {
+            const value = this.form.values[field.name];
+            if (field.type === "json") {
+              try {
+                payload[field.name] = JSON.parse(value || field.default || "{}");
+              } catch (error) {
+                alert(`${field.label} 格式不正确`);
+                return;
+              }
+            } else if (field.type === "number") {
+              payload[field.name] = Number(value || 0);
+            } else {
+              payload[field.name] = value;
+            }
+          }
+
+          const url = this.form.id
+            ? `/api/v1/basic-configs/${resourceName}/${this.form.id}`
+            : `/api/v1/basic-configs/${resourceName}`;
+          const response = await fetch(url, {
+            method: this.form.id ? "PUT" : "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          const result = await response.json();
+          if (!response.ok) {
+            alert(result.detail || "保存失败");
+            return;
+          }
+          this.clearConfigForm();
+          this.closeConfigForm();
+          await this.loadConfigs();
+          if (resourceName === "admin-menus") {
+            await this.loadMenuConfig("menu");
+            if (this.currentMenu.type === "crud") {
+              await this.loadConfigs();
+            } else {
+              this.configItems = [];
+            }
+          }
+        },
+        clearConfigForm() {
+          const values = {};
+          this.editableFields.forEach((field) => {
+            values[field.name] = this.defaultFieldValue(field);
+          });
+          this.form = { id: "", values };
+        },
+        defaultFieldValue(field) {
+          if (field.default !== undefined) return field.default;
+          if (field.type === "boolean") return false;
+          if (field.type === "number") return 0;
+          if (field.type === "json") return field.default || "{}";
+          return "";
+        },
+        defaultJsonValue(field) {
+          try {
+            return JSON.parse(field.default || "{}");
+          } catch (error) {
+            return {};
+          }
+        },
+        fieldLabel(field) {
+          const match = this.editableFields.find((item) => item.name === field);
+          return match?.label || fieldLabels[field] || field;
+        },
+        isBooleanField(field) {
+          return ["enabled", "required", "skip_holidays", "is_terminal"].includes(field);
+        },
+        isMono(field) {
+          return field.endsWith("_key") || field === "provider" || field === "base_url";
+        },
+        columnStyle(field) {
+          if (field.endsWith("_key")) return "width: 18%";
+          if (this.isBooleanField(field)) return "width: 88px";
+          return "";
+        },
+        formatCell(value) {
+          if (value === null || value === undefined || value === "") return "-";
+          if (typeof value === "object") return JSON.stringify(value);
+          return String(value);
+        },
+        statusLabel(status) {
+          return this.statusOptions.find((item) => item.value === status)?.label || status || "-";
+        },
+        statusClass(status) {
+          return String(status || "").replaceAll("_", "-");
+        },
+        priorityLabel(priority) {
+          const labels = { low: "低", normal: "普通", high: "高", urgent: "紧急" };
+          return labels[priority] || priority || "-";
+        },
+        formatDateTime(value) {
+          if (!value) return "-";
+          return String(value).replace("T", " ").slice(0, 16);
+        },
+        toDatetimeLocal(value) {
+          if (!value) return "";
+          return String(value).slice(0, 16);
+        }
+      }
+    }).mount("#app");
+  </script>
+</body>
+</html>
