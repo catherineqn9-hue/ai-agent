@@ -98,7 +98,7 @@ class ChatServiceTest {
 
         verify(supervisionItemService).updateStatus(itemId, "completed");
         assertThat(response.intent()).isEqualTo("update_supervision_status");
-        assertThat(response.answer()).contains("已更新督办事项状态", "合同确认", "completed");
+        assertThat(response.answer()).contains("已更新督办事项状态", "合同确认", "已完成");
     }
 
     @Test

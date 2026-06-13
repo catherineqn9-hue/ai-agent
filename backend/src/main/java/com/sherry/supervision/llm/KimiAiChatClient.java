@@ -19,7 +19,7 @@ public class KimiAiChatClient implements AiChatClient {
 
     public KimiAiChatClient(
             @Value("${langchain4j.open-ai.chat-model.api-key:}") String apiKey,
-            @Value("${langchain4j.open-ai.chat-model.base-url:https://api.moonshot.cn/v1}") String baseUrl,
+            @Value("${langchain4j.open-ai.chat-model.base-url:https://api.moonshot.ai/v1}") String baseUrl,
             @Value("${langchain4j.open-ai.chat-model.model-name:moonshot-v1-8k}") String modelName,
             @Value("${langchain4j.open-ai.chat-model.log-requests:false}") boolean logRequests,
             @Value("${langchain4j.open-ai.chat-model.log-responses:false}") boolean logResponses) {

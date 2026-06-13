@@ -24,8 +24,8 @@
           <tr v-for="item in items" :key="item.id">
             <td class="mono">{{ item.item_no || "-" }}</td>
             <td>{{ item.title }}</td>
-            <td>{{ priorityLabel(item.priority) }}</td>
-            <td><span class="status-pill" :class="statusClass(item.status)">{{ statusLabel(item.status) }}</span></td>
+            <td>{{ priorityLabel(item.priority, item.priority_name) }}</td>
+            <td><span class="status-pill" :class="statusClass(item.status)">{{ statusLabel(item.status, item.status_name) }}</span></td>
             <td>{{ formatDateTime(item.deadline_at) }}</td>
             <td>{{ item.created_by || "-" }}</td>
             <td class="actions">
@@ -47,8 +47,8 @@
           <h3>{{ detail.item.title }}</h3>
           <div class="detail-grid">
             <span>编号：{{ detail.item.item_no || "-" }}</span>
-            <span>状态：{{ statusLabel(detail.item.status) }}</span>
-            <span>优先级：{{ priorityLabel(detail.item.priority) }}</span>
+            <span>状态：{{ statusLabel(detail.item.status, detail.item.status_name) }}</span>
+            <span>优先级：{{ priorityLabel(detail.item.priority, detail.item.priority_name) }}</span>
             <span>截止时间：{{ formatDateTime(detail.item.deadline_at) }}</span>
             <span>创建人：{{ detail.item.created_by || "-" }}</span>
             <span>完成时间：{{ formatDateTime(detail.item.completed_at) }}</span>
@@ -72,6 +72,79 @@
               <small v-if="feedback.risk_note">风险：{{ feedback.risk_note }}</small>
             </article>
             <div v-if="detail.feedbacks.length === 0" class="empty compact-empty">暂无进度反馈</div>
+          </div>
+        </section>
+
+        <section class="detail-section" data-agent-id="assignment-console">
+          <div class="section-title">
+            <h3>智能分配督办</h3>
+            <span data-agent-field="assignment_policy">AI 仅生成建议，确认后才分配</span>
+          </div>
+          <form class="assignment-form" @submit.prevent="submitAssignment">
+            <label>
+              <span>期望角色</span>
+              <select v-model="assignmentForm.role_type" data-agent-field="role_type">
+                <option value="owner">主责人</option>
+                <option value="collaborator">协办人</option>
+                <option value="reviewer">审核人</option>
+              </select>
+            </label>
+            <label>
+              <span>部门</span>
+              <select v-model="assignmentForm.department_id" data-agent-field="department_id">
+                <option value="operations">运营部</option>
+              </select>
+            </label>
+            <label>
+              <span>分配给</span>
+              <select v-model="assignmentForm.assignee_user_id" data-agent-field="assignee_user_id" required @change="applySelectedUser">
+                <option value="">请选择用户</option>
+                <option v-for="user in assignableUsers" :key="user.username" :value="user.username">
+                  {{ user.display_name }} / {{ user.role_name || roleLabel(user.role_key) }}
+                </option>
+              </select>
+            </label>
+            <label class="wide">
+              <span>分派说明</span>
+              <input v-model="assignmentForm.assignment_note" data-agent-field="assignment_note" />
+            </label>
+            <div class="dialog-actions wide-actions">
+              <button type="button" data-agent-action="generate_assignment_recommendations" @click="loadRecommendations">
+                生成 AI 建议
+              </button>
+              <button class="primary" data-agent-action="confirm_assignment" type="submit">确认分配</button>
+            </div>
+          </form>
+
+          <div class="candidate-list" data-agent-id="assignment-candidates">
+            <article v-for="candidate in assignmentCandidates" :key="candidate.assignee_user_id" class="candidate-item">
+              <div>
+                <strong data-agent-field="candidate_name">{{ candidate.assignee_name }}</strong>
+                <span data-agent-field="candidate_role">{{ candidate.role_name }}</span>
+                <span data-agent-field="candidate_confidence">置信度：{{ Math.round(candidate.confidence * 100) }}%</span>
+              </div>
+              <p data-agent-field="candidate_reason">{{ candidate.reason }}</p>
+              <button type="button" data-agent-action="apply_assignment_candidate" @click="applyCandidate(candidate)">
+                采用此建议
+              </button>
+            </article>
+            <div v-if="assignmentCandidates.length === 0" class="empty compact-empty">暂无 AI 分配建议</div>
+          </div>
+        </section>
+
+        <section class="detail-section">
+          <div class="section-title">
+            <h3>责任人</h3>
+            <span>{{ detail.assignees?.length || 0 }} 人</span>
+          </div>
+          <div class="assignee-list">
+            <div v-for="assignee in detail.assignees" :key="assignee.id" class="assignee-item">
+              <strong>{{ assignee.assignee_name }}</strong>
+              <span>{{ assignee.department_name || "-" }}</span>
+              <span>{{ assignee.role_type_name || roleLabel(assignee.role_type) }}</span>
+              <span>{{ assignee.confirm_status_name || confirmStatusLabel(assignee.confirm_status) }}</span>
+            </div>
+            <div v-if="!detail.assignees?.length" class="empty compact-empty">暂无责任人</div>
           </div>
         </section>
 
@@ -186,7 +259,7 @@
               <tr v-for="batch in importBatches" :key="batch.id">
                 <td class="mono">{{ batch.batch_no }}</td>
                 <td>{{ batch.batch_name }}</td>
-                <td>{{ batch.import_status }}</td>
+                <td>{{ importStatusLabel(batch.import_status, batch.import_status_name) }}</td>
                 <td>{{ batch.total_count }}</td>
                 <td>{{ batch.success_count }}</td>
                 <td>{{ batch.failed_count }}</td>
@@ -249,7 +322,7 @@
                 <td>{{ item.source_row_no || "-" }}</td>
                 <td class="mono">{{ item.item_no }}</td>
                 <td>{{ item.title }}</td>
-                <td>{{ statusLabel(item.status) }}</td>
+                <td>{{ statusLabel(item.status, item.status_name) }}</td>
               </tr>
               <tr v-if="batchDetail.items.length === 0">
                 <td colspan="4" class="empty">暂无成功事项</td>
@@ -269,12 +342,17 @@ import DialogPanel from "./DialogPanel.vue";
 const props = defineProps({
   items: { type: Array, default: () => [] },
   templates: { type: Array, default: () => [] },
+  users: { type: Array, default: () => [] },
   loadTemplates: { type: Function, required: true },
   loadBatches: { type: Function, required: true },
   loadBatchDetail: { type: Function, required: true },
   loadDetail: { type: Function, required: true },
+  loadUsers: { type: Function, required: true },
+  loadAssignmentRecommendations: { type: Function, required: true },
+  assignItem: { type: Function, required: true },
   createFeedback: { type: Function, required: true },
-  importExcel: { type: Function, required: true }
+  importExcel: { type: Function, required: true },
+  currentUser: { type: Object, default: null }
 });
 const emit = defineEmits(["refresh", "save", "delete", "notify"]);
 const itemDialogOpen = ref(false);
@@ -288,6 +366,8 @@ const importBatches = ref([]);
 const batchDetail = ref(null);
 const detail = ref(null);
 const feedbackForm = ref(emptyFeedbackForm());
+const assignmentCandidates = ref([]);
+const assignmentForm = ref(emptyAssignmentForm());
 
 const statusOptions = [
   { value: "pending_assign", label: "待分派" },
@@ -298,12 +378,15 @@ const statusOptions = [
 ];
 
 const selectedTemplate = computed(() => props.templates.find((item) => item.template_code === importForm.value.templateCode));
+const assignableUsers = computed(() => props.users.filter((user) => user.enabled !== false && user.department_id === assignmentForm.value.department_id));
 
 async function openDetail(itemId) {
   const data = await props.loadDetail(itemId);
   if (!data) return;
   detail.value = data;
   feedbackForm.value = emptyFeedbackForm();
+  assignmentForm.value = emptyAssignmentForm();
+  assignmentCandidates.value = [];
   detailDialogOpen.value = true;
 }
 
@@ -322,7 +405,7 @@ function openEdit(item) {
       priority: item.priority || "normal",
       status: item.status || "pending_assign",
       deadline_at: toDatetimeLocal(item.deadline_at),
-      created_by: item.created_by || "admin"
+      created_by: item.created_by || props.currentUser?.username || "admin"
     }
   };
   itemDialogOpen.value = true;
@@ -349,8 +432,8 @@ async function submitFeedback() {
   if (!detail.value?.item?.id) return;
   await props.createFeedback({
     item_id: detail.value.item.id,
-    feedback_user_id: "admin_user",
-    feedback_user_name: "管理员",
+    feedback_user_id: props.currentUser?.username || "admin_user",
+    feedback_user_name: props.currentUser?.display_name || props.currentUser?.username || "管理员",
     progress_percent: feedbackForm.value.progressPercent,
     content: feedbackForm.value.content,
     risk_note: feedbackForm.value.riskNote || null
@@ -360,6 +443,46 @@ async function submitFeedback() {
     detail.value = data;
   }
   feedbackForm.value = emptyFeedbackForm();
+}
+
+async function loadRecommendations() {
+  if (!detail.value?.item?.id) return;
+  await props.loadUsers();
+  const data = await props.loadAssignmentRecommendations(detail.value.item.id, {
+    role_type: assignmentForm.value.role_type,
+    department_id: assignmentForm.value.department_id
+  });
+  assignmentCandidates.value = data?.candidates || [];
+}
+
+function applyCandidate(candidate) {
+  assignmentForm.value = {
+    ...assignmentForm.value,
+    assignee_user_id: candidate.assignee_user_id,
+    assignee_name: candidate.assignee_name,
+    department_id: candidate.department_id || "operations",
+    department_name: candidate.department_name || "运营部",
+    role_type: candidate.role_type || assignmentForm.value.role_type,
+    assignment_note: candidate.reason || assignmentForm.value.assignment_note
+  };
+}
+
+function applySelectedUser() {
+  const user = props.users.find((item) => item.username === assignmentForm.value.assignee_user_id);
+  if (!user) return;
+  assignmentForm.value.assignee_name = user.display_name || user.username;
+  assignmentForm.value.department_id = user.department_id || "operations";
+  assignmentForm.value.department_name = user.department_name || "运营部";
+}
+
+async function submitAssignment() {
+  if (!detail.value?.item?.id || !assignmentForm.value.assignee_user_id) return;
+  applySelectedUser();
+  await props.assignItem(detail.value.item.id, assignmentForm.value);
+  const data = await props.loadDetail(detail.value.item.id);
+  if (data) detail.value = data;
+  assignmentForm.value = emptyAssignmentForm();
+  assignmentCandidates.value = [];
 }
 
 async function openImport() {
@@ -423,7 +546,7 @@ function emptyForm() {
       priority: "normal",
       status: "pending_assign",
       deadline_at: "",
-      created_by: "admin"
+      created_by: props.currentUser?.username || "admin"
     }
   };
 }
@@ -436,16 +559,39 @@ function emptyFeedbackForm() {
   };
 }
 
-function statusLabel(status) {
-  return statusOptions.find((item) => item.value === status)?.label || status || "-";
+function statusLabel(status, statusName) {
+  return statusName || statusOptions.find((item) => item.value === status)?.label || status || "-";
+}
+
+function emptyAssignmentForm() {
+  return {
+    assignee_user_id: "",
+    assignee_name: "",
+    department_id: "operations",
+    department_name: "运营部",
+    role_type: "owner",
+    assignment_note: ""
+  };
 }
 
 function statusClass(status) {
   return String(status || "").replaceAll("_", "-");
 }
 
-function priorityLabel(priority) {
-  return { low: "低", normal: "普通", high: "高", urgent: "紧急" }[priority] || priority || "-";
+function priorityLabel(priority, priorityName) {
+  return priorityName || { low: "低", normal: "普通", high: "高", urgent: "紧急" }[priority] || priority || "-";
+}
+
+function roleLabel(role) {
+  return { owner: "主责人", collaborator: "协办人", reviewer: "审核人", member: "成员" }[role] || role || "-";
+}
+
+function confirmStatusLabel(status) {
+  return { pending: "待确认", confirmed: "已确认", rejected: "已拒绝" }[status] || status || "-";
+}
+
+function importStatusLabel(status, statusName) {
+  return statusName || { pending: "待导入", parsing: "解析中", completed: "已完成", failed: "失败" }[status] || status || "-";
 }
 
 function formatDateTime(value) {

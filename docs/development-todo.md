@@ -43,7 +43,7 @@ DATABASE_PASSWORD=sherry_dev_password
 
 ```powershell
 $env:KIMI_API_KEY="你的 Kimi API Key"
-$env:KIMI_BASE_URL="https://api.moonshot.cn/v1"
+$env:KIMI_BASE_URL="https://api.moonshot.ai/v1"
 $env:KIMI_MODEL="moonshot-v1-8k"
 ```
 

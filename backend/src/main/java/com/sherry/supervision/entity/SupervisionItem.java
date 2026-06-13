@@ -1,6 +1,8 @@
 package com.sherry.supervision.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.sherry.supervision.common.StatusLabels;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import lombok.Getter;
@@ -21,4 +23,14 @@ public class SupervisionItem extends BaseEntity {
     private OffsetDateTime deadlineAt;
     private OffsetDateTime completedAt;
     private String createdBy;
+
+    @JsonProperty("status_name")
+    public String getStatusName() {
+        return StatusLabels.itemStatusLabel(status);
+    }
+
+    @JsonProperty("priority_name")
+    public String getPriorityName() {
+        return StatusLabels.priorityLabel(priority);
+    }
 }

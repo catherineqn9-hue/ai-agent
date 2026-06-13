@@ -1,6 +1,7 @@
 package com.sherry.supervision.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.sherry.supervision.common.StatusLabels;
 import com.sherry.supervision.dto.SupervisionItemRequest;
 import com.sherry.supervision.entity.SupervisionItem;
 import com.sherry.supervision.exception.BusinessConflictException;
@@ -41,8 +42,9 @@ public class SupervisionItemServiceImpl implements SupervisionItemService {
 
     @Override
     public List<SupervisionItem> list(String status, String keyword) {
+        String normalizedStatus = StringUtils.hasText(status) ? normalizeStatus(status) : status;
         LambdaQueryWrapper<SupervisionItem> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(StringUtils.hasText(status), SupervisionItem::getStatus, status);
+        wrapper.eq(StringUtils.hasText(normalizedStatus), SupervisionItem::getStatus, normalizedStatus);
         if (StringUtils.hasText(keyword)) {
             wrapper.and(query -> query.like(SupervisionItem::getTitle, keyword)
                     .or()
@@ -59,7 +61,7 @@ public class SupervisionItemServiceImpl implements SupervisionItemService {
 
     @Override
     public SupervisionItem create(SupervisionItemRequest request) {
-        String status = defaultValue(request.status(), STATUS_PENDING_ASSIGN);
+        String status = normalizeStatus(defaultValue(request.status(), STATUS_PENDING_ASSIGN));
         validateKnownStatus(status);
 
         SupervisionItem item = new SupervisionItem();
@@ -83,7 +85,7 @@ public class SupervisionItemServiceImpl implements SupervisionItemService {
     @Override
     public SupervisionItem update(UUID id, SupervisionItemRequest request) {
         SupervisionItem item = findById(id);
-        String nextStatus = defaultValue(request.status(), item.getStatus());
+        String nextStatus = normalizeStatus(defaultValue(request.status(), item.getStatus()));
         validateTransition(item.getStatus(), nextStatus);
 
         item.setItemNo(defaultValue(request.itemNo(), item.getItemNo()));
@@ -104,10 +106,11 @@ public class SupervisionItemServiceImpl implements SupervisionItemService {
     @Override
     public SupervisionItem updateStatus(UUID id, String status) {
         SupervisionItem item = findById(id);
-        validateTransition(item.getStatus(), status);
+        String nextStatus = normalizeStatus(status);
+        validateTransition(item.getStatus(), nextStatus);
 
-        item.setStatus(status);
-        if (STATUS_COMPLETED.equals(status) && item.getCompletedAt() == null) {
+        item.setStatus(nextStatus);
+        if (STATUS_COMPLETED.equals(nextStatus) && item.getCompletedAt() == null) {
             item.setCompletedAt(OffsetDateTime.now());
         }
         item.setUpdatedAt(OffsetDateTime.now());
@@ -141,13 +144,18 @@ public class SupervisionItemServiceImpl implements SupervisionItemService {
         String current = defaultValue(currentStatus, STATUS_PENDING_ASSIGN);
         validateKnownStatus(current);
         if (!ALLOWED_TRANSITIONS.getOrDefault(current, Set.of()).contains(nextStatus)) {
-            throw new BusinessConflictException("状态不允许从 " + current + " 流转到 " + nextStatus);
+            throw new BusinessConflictException("状态不允许从 "
+                    + StatusLabels.itemStatusLabel(current) + " 流转到 " + StatusLabels.itemStatusLabel(nextStatus));
         }
     }
 
     private void validateKnownStatus(String status) {
         if (!VALID_STATUSES.contains(status)) {
-            throw new BusinessConflictException("未知事项状态：" + status);
+            throw new BusinessConflictException("未知事项状态：" + StatusLabels.itemStatusLabel(status));
         }
+    }
+
+    private String normalizeStatus(String status) {
+        return StatusLabels.normalizeItemStatus(status);
     }
 }

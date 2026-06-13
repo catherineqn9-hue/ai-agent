@@ -36,6 +36,8 @@ Valid statuses:
 | `completed` | 已完成 | Yes |
 | `cancelled` | 已取消 | Yes |
 
+The backend stores the stable `status` code for workflow transitions and returns `status_name` for Chinese display. Create/update/status APIs accept either the status code or the Chinese name.
+
 Allowed transitions:
 
 | From | To |
@@ -59,6 +61,109 @@ Response `data`:
 ```json
 {
   "status": "ok"
+}
+```
+
+### Auth
+
+`POST /api/v1/auth/register`
+
+Request:
+
+```json
+{
+  "username": "admin",
+  "display_name": "管理员",
+  "password": "password123"
+}
+```
+
+`POST /api/v1/auth/login`
+
+Request:
+
+```json
+{
+  "username": "admin",
+  "password": "password123"
+}
+```
+
+Register and login response `data`:
+
+```json
+{
+  "access_token": "opaque-token",
+  "token_type": "Bearer",
+  "user": {
+    "id": "uuid",
+    "username": "admin",
+    "display_name": "管理员",
+    "department_id": "operations",
+    "department_name": "运营部",
+    "role_key": "owner",
+    "role_name": "主责人"
+  }
+}
+```
+
+`GET /api/v1/auth/me`
+
+Header:
+
+```text
+Authorization: Bearer opaque-token
+```
+
+`POST /api/v1/auth/logout`
+
+Header:
+
+```text
+Authorization: Bearer opaque-token
+```
+
+Passwords are stored as salted PBKDF2 hashes. Session tokens are only stored as SHA-256 hashes.
+
+### Users
+
+`GET /api/v1/users`
+
+Returns local users that can participate in supervision assignment.
+
+Response `data`:
+
+```json
+{
+  "users": [
+    {
+      "id": "uuid",
+      "username": "zhangsan",
+      "display_name": "张三",
+      "department_id": "operations",
+      "department_name": "运营部",
+      "role_key": "owner",
+      "role_name": "主责人",
+      "enabled": true
+    }
+  ]
+}
+```
+
+`PUT /api/v1/users/{id}`
+
+Updates the display name, department, role, and enabled status used by assignment routing.
+
+Request:
+
+```json
+{
+  "display_name": "张三",
+  "department_id": "operations",
+  "department_name": "运营部",
+  "role_key": "owner",
+  "role_name": "主责人",
+  "enabled": true
 }
 ```
 
@@ -117,7 +222,7 @@ Request:
 Notes:
 
 - `item_no` can be omitted; backend generates it.
-- `status` must be one of the valid supervision item statuses.
+- `status` must be one of the valid supervision item statuses. Chinese labels such as `进行中` are accepted and normalized before storage.
 - Duplicate `item_no` returns `HTTP 409`, `code=40900`.
 
 `PUT /api/v1/supervision-items/{id}`
@@ -134,6 +239,14 @@ Request:
 }
 ```
 
+`status` can also be the Chinese label, for example:
+
+```json
+{
+  "status": "已完成"
+}
+```
+
 `DELETE /api/v1/supervision-items/{id}`
 
 Response `data`:
@@ -143,6 +256,124 @@ Response `data`:
   "deleted": "uuid"
 }
 ```
+
+`GET /api/v1/supervision-items/{id}/assignees`
+
+Response `data`:
+
+```json
+{
+  "assignees": [
+    {
+      "id": "uuid",
+      "item_id": "uuid",
+      "assigned_by_user_id": "manager",
+      "assigned_by_name": "分配人",
+      "assignee_user_id": "zhangsan",
+      "assignee_name": "张三",
+      "role_type": "owner",
+      "role_type_name": "主责人",
+      "confirm_status": "pending",
+      "confirm_status_name": "待确认",
+      "assignment_note": "请负责本周经营数据汇总",
+      "assigned_at": "2026-06-13T16:00:00+08:00"
+    }
+  ]
+}
+```
+
+`GET /api/v1/supervision-items/{id}/assignment-recommendations?role_type=owner&department_id=operations`
+
+Returns AI-assist assignment candidates based on the current user role and department metadata. This endpoint only recommends candidates. It does not write assignment records. Human confirmation is still required through `POST /api/v1/supervision-items/{id}/assignees`.
+
+Response `data`:
+
+```json
+{
+  "candidates": [
+    {
+      "assignee_user_id": "zhangsan",
+      "assignee_name": "张三",
+      "department_id": "operations",
+      "department_name": "运营部",
+      "role_type": "owner",
+      "role_name": "主责人",
+      "confidence": 0.82,
+      "reason": "用户角色匹配主责人，且属于当前默认部门，可作为督办分派候选。",
+      "requires_human_review": true
+    }
+  ]
+}
+```
+
+`POST /api/v1/supervision-items/{id}/assignees`
+
+Request:
+
+```json
+{
+  "assignee_user_id": "zhangsan",
+  "assignee_name": "张三",
+  "role_type": "owner",
+  "department_id": null,
+  "department_name": null,
+  "assignment_note": "请负责本周经营数据汇总"
+}
+```
+
+`POST /api/v1/supervision-items/{id}/confirm-receive`
+
+Confirms the current logged-in user's assignment. If the item is still `pending_assign`, it moves to `in_progress`.
+
+`POST /api/v1/supervision-items/{id}/reject-assignment`
+
+Request:
+
+```json
+{
+  "rejection_reason": "当前不属于我的职责范围"
+}
+```
+
+### My Supervision Console
+
+`GET /api/v1/my/supervision-items`
+
+Returns supervision items assigned to the current logged-in user.
+
+Response `data`:
+
+```json
+{
+  "items": [
+    {
+      "item": {
+        "id": "uuid",
+        "item_no": "ITEM-001",
+        "title": "整理经营周报",
+        "priority": "normal",
+        "priority_name": "普通",
+        "status": "in_progress",
+        "status_name": "进行中"
+      },
+      "assignment": {
+        "assigned_by_user_id": "manager",
+        "assigned_by_name": "分配人",
+        "assignee_user_id": "zhangsan",
+        "assignee_name": "张三",
+        "confirm_status": "pending",
+        "confirm_status_name": "待确认"
+      },
+      "risk_level": "medium",
+      "requires_human_review": false
+    }
+  ]
+}
+```
+
+`GET /api/v1/my/supervision-items/{id}`
+
+Returns the current user's assignment, all assignees, and progress feedbacks for the item.
 
 ### Progress Feedbacks
 
@@ -331,7 +562,7 @@ Import batch detail request example:
 Kimi model configuration:
 
 - `KIMI_API_KEY`: Moonshot/Kimi API key. Keep it in environment variables, not source code.
-- `KIMI_BASE_URL`: defaults to `https://api.moonshot.cn/v1`.
+- `KIMI_BASE_URL`: defaults to `https://api.moonshot.ai/v1`.
 - `KIMI_MODEL`: defaults to `moonshot-v1-8k`.
 
 AI tool call audit:

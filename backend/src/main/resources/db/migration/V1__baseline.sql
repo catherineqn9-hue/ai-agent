@@ -44,6 +44,53 @@ CREATE TABLE IF NOT EXISTS excel_import_template (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS app_user (
+    id UUID PRIMARY KEY,
+    username VARCHAR(80) NOT NULL UNIQUE,
+    display_name VARCHAR(120) NOT NULL,
+    department_id VARCHAR(80) NOT NULL DEFAULT 'operations',
+    department_name VARCHAR(120) NOT NULL DEFAULT '运营部',
+    role_key VARCHAR(60) NOT NULL DEFAULT 'member',
+    role_name VARCHAR(120) NOT NULL DEFAULT '成员',
+    password_hash VARCHAR(256) NOT NULL,
+    password_salt VARCHAR(128) NOT NULL,
+    session_token_hash VARCHAR(256),
+    session_expires_at TIMESTAMPTZ,
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE app_user ADD COLUMN IF NOT EXISTS department_id VARCHAR(80) NOT NULL DEFAULT 'operations';
+ALTER TABLE app_user ADD COLUMN IF NOT EXISTS department_name VARCHAR(120) NOT NULL DEFAULT '运营部';
+ALTER TABLE app_user ADD COLUMN IF NOT EXISTS role_key VARCHAR(60) NOT NULL DEFAULT 'member';
+ALTER TABLE app_user ADD COLUMN IF NOT EXISTS role_name VARCHAR(120) NOT NULL DEFAULT '成员';
+
+CREATE TABLE IF NOT EXISTS item_assignee (
+    id UUID PRIMARY KEY,
+    item_id UUID NOT NULL REFERENCES supervision_item(id) ON DELETE CASCADE,
+    assigned_by_user_id VARCHAR(80) NOT NULL DEFAULT 'system',
+    assigned_by_name VARCHAR(120) NOT NULL DEFAULT '系统',
+    assignee_user_id VARCHAR(80) NOT NULL,
+    assignee_name VARCHAR(120) NOT NULL,
+    department_id VARCHAR(80),
+    department_name VARCHAR(120),
+    role_type VARCHAR(40) NOT NULL DEFAULT 'owner',
+    confirm_status VARCHAR(40) NOT NULL DEFAULT 'pending',
+    assignment_note TEXT,
+    rejection_reason TEXT,
+    assigned_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    confirmed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE item_assignee ADD COLUMN IF NOT EXISTS assigned_by_user_id VARCHAR(80) NOT NULL DEFAULT 'system';
+ALTER TABLE item_assignee ADD COLUMN IF NOT EXISTS assigned_by_name VARCHAR(120) NOT NULL DEFAULT '系统';
+ALTER TABLE item_assignee ADD COLUMN IF NOT EXISTS assignment_note TEXT;
+ALTER TABLE item_assignee ADD COLUMN IF NOT EXISTS rejection_reason TEXT;
+ALTER TABLE item_assignee ADD COLUMN IF NOT EXISTS assigned_at TIMESTAMPTZ NOT NULL DEFAULT now();
+
 CREATE TABLE IF NOT EXISTS supervision_import_error (
     id UUID PRIMARY KEY,
     batch_id UUID NOT NULL,
@@ -57,3 +104,8 @@ CREATE TABLE IF NOT EXISTS supervision_import_error (
 );
 
 CREATE INDEX IF NOT EXISTS idx_supervision_import_error_batch_id ON supervision_import_error(batch_id);
+CREATE INDEX IF NOT EXISTS idx_app_user_session_token_hash ON app_user(session_token_hash);
+CREATE INDEX IF NOT EXISTS idx_app_user_department_role ON app_user(department_id, role_key);
+CREATE INDEX IF NOT EXISTS idx_item_assignee_item_id ON item_assignee(item_id);
+CREATE INDEX IF NOT EXISTS idx_item_assignee_user_id ON item_assignee(assignee_user_id);
+CREATE INDEX IF NOT EXISTS idx_item_assignee_assigned_by_user_id ON item_assignee(assigned_by_user_id);

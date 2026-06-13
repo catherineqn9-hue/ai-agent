@@ -34,7 +34,15 @@ INSERT INTO agent_config (
         '{"model":"moonshot-v1-8k","temperature":0.2}'::jsonb,
         true
     )
-ON CONFLICT (agent_key) DO NOTHING;
+ON CONFLICT (agent_key) DO UPDATE SET
+    agent_name = EXCLUDED.agent_name,
+    agent_type = EXCLUDED.agent_type,
+    provider = EXCLUDED.provider,
+    system_prompt = EXCLUDED.system_prompt,
+    tool_permissions = EXCLUDED.tool_permissions,
+    parameters = EXCLUDED.parameters,
+    enabled = EXCLUDED.enabled,
+    updated_at = now();
 
 INSERT INTO integration_config (
     id, integration_key, integration_name, integration_type, base_url, auth_type, auth_config, timeout_seconds, enabled
@@ -61,7 +69,38 @@ INSERT INTO integration_config (
         10,
         false
     )
-ON CONFLICT (integration_key) DO NOTHING;
+ON CONFLICT (integration_key) DO UPDATE SET
+    integration_name = EXCLUDED.integration_name,
+    integration_type = EXCLUDED.integration_type,
+    base_url = EXCLUDED.base_url,
+    auth_type = EXCLUDED.auth_type,
+    auth_config = EXCLUDED.auth_config,
+    timeout_seconds = EXCLUDED.timeout_seconds,
+    enabled = EXCLUDED.enabled,
+    updated_at = now();
+
+INSERT INTO excel_import_template (
+    id, template_code, template_name, description, handler_code, source_columns, entity_fields, mapping_config, enabled
+) VALUES (
+    gen_random_uuid(),
+    'standard_supervision',
+    '标准督办模板',
+    '用于导入标准督办事项 Excel。',
+    'standard_supervision',
+    '["事项编号", "标题", "描述", "优先级", "状态", "截止时间", "创建人"]'::jsonb,
+    '["item_no", "title", "description", "priority", "status", "deadline_at", "created_by"]'::jsonb,
+    '{}'::jsonb,
+    true
+)
+ON CONFLICT (template_code) DO UPDATE SET
+    template_name = EXCLUDED.template_name,
+    description = EXCLUDED.description,
+    handler_code = EXCLUDED.handler_code,
+    source_columns = EXCLUDED.source_columns,
+    entity_fields = EXCLUDED.entity_fields,
+    mapping_config = EXCLUDED.mapping_config,
+    enabled = EXCLUDED.enabled,
+    updated_at = now();
 
 INSERT INTO message_template (
     id, template_key, template_name, scene, channel, title_template, body_template, variables, enabled
@@ -88,7 +127,15 @@ INSERT INTO message_template (
         '["title"]'::jsonb,
         true
     )
-ON CONFLICT (template_key) DO NOTHING;
+ON CONFLICT (template_key) DO UPDATE SET
+    template_name = EXCLUDED.template_name,
+    scene = EXCLUDED.scene,
+    channel = EXCLUDED.channel,
+    title_template = EXCLUDED.title_template,
+    body_template = EXCLUDED.body_template,
+    variables = EXCLUDED.variables,
+    enabled = EXCLUDED.enabled,
+    updated_at = now();
 
 INSERT INTO excel_field_mapping (
     id, mapping_key, mapping_name, source_column, target_field, required, transform_rule, enabled
@@ -113,7 +160,14 @@ INSERT INTO excel_field_mapping (
         '{"type": "date"}'::jsonb,
         true
     )
-ON CONFLICT (mapping_key) DO NOTHING;
+ON CONFLICT (mapping_key) DO UPDATE SET
+    mapping_name = EXCLUDED.mapping_name,
+    source_column = EXCLUDED.source_column,
+    target_field = EXCLUDED.target_field,
+    required = EXCLUDED.required,
+    transform_rule = EXCLUDED.transform_rule,
+    enabled = EXCLUDED.enabled,
+    updated_at = now();
 
 INSERT INTO reminder_rule (
     id, rule_key, rule_name, trigger_type, days_before_deadline, repeat_interval_hours, max_send_count, skip_holidays, enabled
@@ -129,7 +183,15 @@ INSERT INTO reminder_rule (
         true,
         true
     )
-ON CONFLICT (rule_key) DO NOTHING;
+ON CONFLICT (rule_key) DO UPDATE SET
+    rule_name = EXCLUDED.rule_name,
+    trigger_type = EXCLUDED.trigger_type,
+    days_before_deadline = EXCLUDED.days_before_deadline,
+    repeat_interval_hours = EXCLUDED.repeat_interval_hours,
+    max_send_count = EXCLUDED.max_send_count,
+    skip_holidays = EXCLUDED.skip_holidays,
+    enabled = EXCLUDED.enabled,
+    updated_at = now();
 
 INSERT INTO status_dict (
     id, status_key, status_name, status_group, sort_order, is_terminal, enabled
@@ -140,4 +202,10 @@ INSERT INTO status_dict (
     (gen_random_uuid(), 'near_due', '临期', 'supervision_item', 40, false, true),
     (gen_random_uuid(), 'completed', '已完成', 'supervision_item', 90, true, true),
     (gen_random_uuid(), 'overdue', '已逾期', 'supervision_item', 100, false, true)
-ON CONFLICT (status_key) DO NOTHING;
+ON CONFLICT (status_key) DO UPDATE SET
+    status_name = EXCLUDED.status_name,
+    status_group = EXCLUDED.status_group,
+    sort_order = EXCLUDED.sort_order,
+    is_terminal = EXCLUDED.is_terminal,
+    enabled = EXCLUDED.enabled,
+    updated_at = now();

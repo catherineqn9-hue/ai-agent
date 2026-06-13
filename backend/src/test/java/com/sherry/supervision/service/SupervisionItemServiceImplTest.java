@@ -38,6 +38,19 @@ class SupervisionItemServiceImplTest {
     }
 
     @Test
+    void shouldAcceptChineseStatusLabel() {
+        UUID id = UUID.randomUUID();
+        SupervisionItem item = item(id, "pending_assign");
+        when(mapper.selectById(id)).thenReturn(item);
+
+        SupervisionItem updated = service.updateStatus(id, "进行中");
+
+        assertThat(updated.getStatus()).isEqualTo("in_progress");
+        assertThat(updated.getStatusName()).isEqualTo("进行中");
+        verify(mapper).updateById(item);
+    }
+
+    @Test
     void shouldGetItemById() {
         UUID id = UUID.randomUUID();
         SupervisionItem item = item(id, "pending_assign");
@@ -57,7 +70,7 @@ class SupervisionItemServiceImplTest {
 
         assertThatThrownBy(() -> service.updateStatus(id, "in_progress"))
                 .isInstanceOf(BusinessConflictException.class)
-                .hasMessageContaining("状态不允许从 completed 流转到 in_progress");
+                .hasMessageContaining("状态不允许从 已完成 流转到 进行中");
     }
 
     @Test

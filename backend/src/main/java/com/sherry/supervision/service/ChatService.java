@@ -1,5 +1,6 @@
 package com.sherry.supervision.service;
 
+import com.sherry.supervision.common.StatusLabels;
 import com.sherry.supervision.dto.ChatRequest;
 import com.sherry.supervision.dto.ChatResponse;
 import com.sherry.supervision.dto.ProgressFeedbackRequest;
@@ -159,7 +160,7 @@ public class ChatService {
             return response(
                     requestId,
                     threadId,
-                    "已更新督办事项状态：" + item.getTitle() + " -> " + item.getStatus() + "。",
+                    "已更新督办事项状态：" + item.getTitle() + " -> " + StatusLabels.itemStatusLabel(item.getStatus()) + "。",
                     false,
                     List.of(),
                     intent,
@@ -325,7 +326,7 @@ public class ChatService {
         StringBuilder builder = new StringBuilder("查到 ").append(items.size()).append(" 条督办事项，先列前 ")
                 .append(Math.min(items.size(), 5)).append(" 条：");
         items.stream().limit(5).forEach(item -> builder.append("\n- ")
-                .append(item.getTitle()).append("（").append(item.getStatus()).append("，编号：")
+                .append(item.getTitle()).append("（").append(StatusLabels.itemStatusLabel(item.getStatus())).append("，编号：")
                 .append(item.getItemNo()).append("）"));
         return builder.toString();
     }

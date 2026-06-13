@@ -1,12 +1,13 @@
 package com.sherry.supervision.dto;
 
+import com.sherry.supervision.entity.ItemAssignee;
 import com.sherry.supervision.entity.ProgressFeedback;
 import com.sherry.supervision.entity.SupervisionItem;
-import com.sherry.supervision.entity.ItemAssignee;
 import java.util.List;
 
-public record SupervisionItemDetail(
+public record MySupervisionItemDetail(
         SupervisionItem item,
+        ItemAssignee assignment,
         List<ItemAssignee> assignees,
         List<ProgressFeedback> feedbacks) {
 }

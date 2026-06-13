@@ -9,6 +9,8 @@ import com.sherry.supervision.common.ApiResponse;
 import com.sherry.supervision.dto.SupervisionItemDetail;
 import com.sherry.supervision.entity.ProgressFeedback;
 import com.sherry.supervision.entity.SupervisionItem;
+import com.sherry.supervision.service.ItemAssignmentService;
+import com.sherry.supervision.service.AssignmentRecommendationService;
 import com.sherry.supervision.service.ProgressFeedbackService;
 import com.sherry.supervision.service.SupervisionItemService;
 import java.util.List;
@@ -20,13 +22,21 @@ class SupervisionItemControllerTest {
 
     private SupervisionItemService supervisionItemService;
     private ProgressFeedbackService progressFeedbackService;
+    private ItemAssignmentService itemAssignmentService;
+    private AssignmentRecommendationService assignmentRecommendationService;
     private SupervisionItemController controller;
 
     @BeforeEach
     void setUp() {
         supervisionItemService = mock(SupervisionItemService.class);
         progressFeedbackService = mock(ProgressFeedbackService.class);
-        controller = new SupervisionItemController(supervisionItemService, progressFeedbackService);
+        itemAssignmentService = mock(ItemAssignmentService.class);
+        assignmentRecommendationService = mock(AssignmentRecommendationService.class);
+        controller = new SupervisionItemController(
+                supervisionItemService,
+                progressFeedbackService,
+                itemAssignmentService,
+                assignmentRecommendationService);
     }
 
     @Test
@@ -43,11 +53,13 @@ class SupervisionItemControllerTest {
 
         when(supervisionItemService.get(itemId)).thenReturn(item);
         when(progressFeedbackService.list(itemId)).thenReturn(List.of(feedback));
+        when(itemAssignmentService.listByItem(itemId)).thenReturn(List.of());
 
         ApiResponse<SupervisionItemDetail> response = controller.detail(itemId);
 
         assertThat(response.data().item()).isSameAs(item);
         assertThat(response.data().feedbacks()).containsExactly(feedback);
+        assertThat(response.data().assignees()).isEmpty();
         verify(supervisionItemService).get(itemId);
         verify(progressFeedbackService).list(itemId);
     }

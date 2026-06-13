@@ -97,6 +97,23 @@ CREATE TABLE IF NOT EXISTS status_dict (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS app_user (
+    id UUID PRIMARY KEY,
+    username VARCHAR(80) NOT NULL UNIQUE,
+    display_name VARCHAR(120) NOT NULL,
+    department_id VARCHAR(80) NOT NULL DEFAULT 'operations',
+    department_name VARCHAR(120) NOT NULL DEFAULT '运营部',
+    role_key VARCHAR(60) NOT NULL DEFAULT 'member',
+    role_name VARCHAR(120) NOT NULL DEFAULT '成员',
+    password_hash VARCHAR(256) NOT NULL,
+    password_salt VARCHAR(128) NOT NULL,
+    session_token_hash VARCHAR(256),
+    session_expires_at TIMESTAMPTZ,
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS admin_menu_config (
     id UUID PRIMARY KEY,
     menu_id VARCHAR(80) NOT NULL UNIQUE,
@@ -160,12 +177,17 @@ CREATE TABLE IF NOT EXISTS supervision_item (
 CREATE TABLE IF NOT EXISTS item_assignee (
     id UUID PRIMARY KEY,
     item_id UUID NOT NULL REFERENCES supervision_item(id) ON DELETE CASCADE,
+    assigned_by_user_id VARCHAR(80) NOT NULL DEFAULT 'system',
+    assigned_by_name VARCHAR(120) NOT NULL DEFAULT '系统',
     assignee_user_id VARCHAR(80) NOT NULL,
     assignee_name VARCHAR(120) NOT NULL,
     department_id VARCHAR(80),
     department_name VARCHAR(120),
     role_type VARCHAR(40) NOT NULL DEFAULT 'owner',
     confirm_status VARCHAR(40) NOT NULL DEFAULT 'pending',
+    assignment_note TEXT,
+    rejection_reason TEXT,
+    assigned_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     confirmed_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -234,6 +256,9 @@ CREATE INDEX IF NOT EXISTS idx_supervision_item_status ON supervision_item(statu
 CREATE INDEX IF NOT EXISTS idx_supervision_item_deadline_at ON supervision_item(deadline_at);
 CREATE INDEX IF NOT EXISTS idx_item_assignee_item_id ON item_assignee(item_id);
 CREATE INDEX IF NOT EXISTS idx_item_assignee_user_id ON item_assignee(assignee_user_id);
+CREATE INDEX IF NOT EXISTS idx_item_assignee_assigned_by_user_id ON item_assignee(assigned_by_user_id);
 CREATE INDEX IF NOT EXISTS idx_progress_feedback_item_id ON progress_feedback(item_id);
 CREATE INDEX IF NOT EXISTS idx_reminder_record_item_id ON reminder_record(item_id);
 CREATE INDEX IF NOT EXISTS idx_ai_tool_call_log_request_id ON ai_tool_call_log(request_id);
+CREATE INDEX IF NOT EXISTS idx_app_user_session_token_hash ON app_user(session_token_hash);
+CREATE INDEX IF NOT EXISTS idx_app_user_department_role ON app_user(department_id, role_key);

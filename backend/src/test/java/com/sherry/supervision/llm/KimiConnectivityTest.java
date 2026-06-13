@@ -19,7 +19,7 @@ class KimiConnectivityTest {
                 .connectTimeout(Duration.ofSeconds(10))
                 .build();
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.moonshot.cn/v1/models"))
+                .uri(URI.create("https://api.moonshot.ai/v1/models"))
                 .timeout(Duration.ofSeconds(20))
                 .header("Authorization", "Bearer " + System.getenv("KIMI_API_KEY"))
                 .GET()

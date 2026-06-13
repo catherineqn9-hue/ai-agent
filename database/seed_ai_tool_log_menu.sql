@@ -48,3 +48,182 @@ ON CONFLICT (menu_id) DO UPDATE SET
     form_fields = EXCLUDED.form_fields,
     enabled = EXCLUDED.enabled,
     updated_at = now();
+
+INSERT INTO admin_menu_config (
+    id,
+    menu_id,
+    title,
+    icon,
+    menu_type,
+    resource,
+    hint,
+    group_name,
+    sort_order,
+    table_fields,
+    form_fields,
+    enabled
+) VALUES (
+    gen_random_uuid(),
+    'my_supervision',
+    '我的督办台',
+    '我',
+    'my-supervision',
+    'my-supervision-items',
+    '查看分配给当前登录用户的督办事项、分派来源、接收状态和进度反馈。',
+    '督办管理',
+    25,
+    '[]'::jsonb,
+    '[]'::jsonb,
+    true
+)
+ON CONFLICT (menu_id) DO UPDATE SET
+    title = EXCLUDED.title,
+    icon = EXCLUDED.icon,
+    menu_type = EXCLUDED.menu_type,
+    resource = EXCLUDED.resource,
+    hint = EXCLUDED.hint,
+    group_name = EXCLUDED.group_name,
+    sort_order = EXCLUDED.sort_order,
+    table_fields = EXCLUDED.table_fields,
+    form_fields = EXCLUDED.form_fields,
+    enabled = EXCLUDED.enabled,
+    updated_at = now();
+
+INSERT INTO admin_menu_config (
+    id,
+    menu_id,
+    title,
+    icon,
+    menu_type,
+    resource,
+    hint,
+    group_name,
+    sort_order,
+    table_fields,
+    form_fields,
+    enabled
+) VALUES (
+    gen_random_uuid(),
+    'user_management',
+    '用户管理',
+    'U',
+    'user-management',
+    'users',
+    '维护用户所属部门和分配角色，供督办智能分配使用。',
+    '组织权限',
+    35,
+    '[]'::jsonb,
+    '[]'::jsonb,
+    true
+)
+ON CONFLICT (menu_id) DO UPDATE SET
+    title = EXCLUDED.title,
+    icon = EXCLUDED.icon,
+    menu_type = EXCLUDED.menu_type,
+    resource = EXCLUDED.resource,
+    hint = EXCLUDED.hint,
+    group_name = EXCLUDED.group_name,
+    sort_order = EXCLUDED.sort_order,
+    table_fields = EXCLUDED.table_fields,
+    form_fields = EXCLUDED.form_fields,
+    enabled = EXCLUDED.enabled,
+    updated_at = now();
+
+INSERT INTO admin_menu_config (
+    id,
+    menu_id,
+    title,
+    icon,
+    menu_type,
+    resource,
+    hint,
+    group_name,
+    sort_order,
+    table_fields,
+    form_fields,
+    enabled
+) VALUES (
+    gen_random_uuid(),
+    'agent_configs',
+    'Agent 配置',
+    'A',
+    'crud',
+    'agent-configs',
+    '管理 Agent、权限范围和允许工具。',
+    '基础配置',
+    40,
+    '["agent_key", "agent_name", "provider", "enabled", "updated_at"]'::jsonb,
+    '[
+        {"name":"agent_key","label":"Agent Key"},
+        {"name":"agent_name","label":"Agent 名称"},
+        {"name":"agent_type","label":"Agent 类型"},
+        {"name":"provider","label":"Provider"},
+        {"name":"model_name","label":"模型"},
+        {"name":"system_prompt","label":"系统提示词","type":"textarea"},
+        {"name":"tool_permissions","label":"工具权限","type":"json"},
+        {"name":"parameters","label":"参数","type":"json"},
+        {"name":"enabled","label":"启用","type":"checkbox"}
+    ]'::jsonb,
+    true
+)
+ON CONFLICT (menu_id) DO UPDATE SET
+    title = EXCLUDED.title,
+    icon = EXCLUDED.icon,
+    menu_type = EXCLUDED.menu_type,
+    resource = EXCLUDED.resource,
+    hint = EXCLUDED.hint,
+    group_name = EXCLUDED.group_name,
+    sort_order = EXCLUDED.sort_order,
+    table_fields = EXCLUDED.table_fields,
+    form_fields = EXCLUDED.form_fields,
+    enabled = EXCLUDED.enabled,
+    updated_at = now();
+
+INSERT INTO admin_menu_config (
+    id,
+    menu_id,
+    title,
+    icon,
+    menu_type,
+    resource,
+    hint,
+    group_name,
+    sort_order,
+    table_fields,
+    form_fields,
+    enabled
+) VALUES (
+    gen_random_uuid(),
+    'excel_templates',
+    'Excel 模板',
+    'X',
+    'crud',
+    'excel-import-templates',
+    '维护 Excel 导入字段映射。',
+    '基础配置',
+    50,
+    '["template_code", "template_name", "handler_code", "enabled"]'::jsonb,
+    '[
+        {"name":"template_code","label":"模板编码"},
+        {"name":"template_name","label":"模板名称"},
+        {"name":"description","label":"描述","type":"textarea"},
+        {"name":"handler_code","label":"处理器编码"},
+        {"name":"source_columns","label":"源列名","type":"json"},
+        {"name":"entity_fields","label":"实体字段","type":"json"},
+        {"name":"mapping_config","label":"映射配置","type":"json"},
+        {"name":"enabled","label":"启用","type":"checkbox"}
+    ]'::jsonb,
+    true
+)
+ON CONFLICT (menu_id) DO UPDATE SET
+    title = EXCLUDED.title,
+    icon = EXCLUDED.icon,
+    menu_type = EXCLUDED.menu_type,
+    resource = EXCLUDED.resource,
+    hint = EXCLUDED.hint,
+    group_name = EXCLUDED.group_name,
+    sort_order = EXCLUDED.sort_order,
+    table_fields = EXCLUDED.table_fields,
+    form_fields = EXCLUDED.form_fields,
+    enabled = EXCLUDED.enabled,
+    updated_at = now();
