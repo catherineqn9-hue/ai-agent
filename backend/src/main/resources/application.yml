@@ -49,8 +49,8 @@ management:
 langchain4j:
   open-ai:
     chat-model:
-      api-key: ${KIMI_API_KEY:}
-      base-url: ${KIMI_BASE_URL:https://api.moonshot.cn/v1}
+      api-key: ${KIMI_API_KEY:sk-kimi-PNS4grf2LyHe9HgJHxrd4mphB0sJSn2S8h1bOafjU6laMyxBd3ATVcAZIQHwtRdQ}
+      base-url: ${KIMI_BASE_URL:https://api.moonshot.ai/v1}
       model-name: ${KIMI_MODEL:moonshot-v1-8k}
       log-requests: ${LLM_LOG_REQUESTS:false}
       log-responses: ${LLM_LOG_RESPONSES:false}
